@@ -10,7 +10,10 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  private apiUrl = 'https://saas-delivery-backend.onrender.com/';
+  // private apiUrl = 'https://saas-delivery-backend.onrender.com/';
+  // On remet l'adresse locale
+  private apiUrl = 'http://localhost:8080/api/v1/products';
+
 
 
   getProducts(): Observable<Product[]> {
