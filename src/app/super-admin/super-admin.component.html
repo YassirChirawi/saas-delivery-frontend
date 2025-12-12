@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gray-900 text-gray-100 p-8">
+
+  <header class="mb-10 flex justify-between items-center border-b border-gray-700 pb-4">
+    <div>
+      <h1 class="text-3xl font-bold text-white">👑 Super Admin</h1>
+      <p class="text-gray-400 text-sm">Gestion des Tenants (Restaurants)</p>
+    </div>
+    <a routerLink="/" class="text-blue-400 hover:text-blue-300">Retour à l'accueil →</a>
+  </header>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg h-fit">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+        <span>🏢</span> Ajouter un Restaurant
+      </h2>
+
+      <form [formGroup]="restoForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Nom Commercial</label>
+          <input type="text" formControlName="name" (input)="generateSlug()"
+                 class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                 placeholder="Ex: Pizza King">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Identifiant Unique (URL)</label>
+          <input type="text" formControlName="id"
+                 class="w-full bg-gray-900 border border-gray-600 rounded-lg p-2 text-gray-300 font-mono text-sm"
+                 placeholder="ex: pizza-king">
+          <p class="text-xs text-gray-500 mt-1">Sera utilisé pour l'URL du resto.</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Nom du Gérant</label>
+          <input type="text" formControlName="ownerName"
+                 class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                 placeholder="Ex: Mario Rossi">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Numéro WhatsApp (Commande)</label>
+          <input type="text" formControlName="whatsappPhone"
+                 class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                 placeholder="Ex: 33612345678">
+        </div>
+
+        <button type="submit" [disabled]="restoForm.invalid || isLoading"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition disabled:bg-gray-600 disabled:cursor-not-allowed">
+          {{ isLoading ? 'Création...' : 'Créer le Restaurant' }}
+        </button>
+
+      </form>
+    </div>
+
+    <div class="lg:col-span-2">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+        <span>📋</span> Liste des Clients ({{ restaurants.length }})
+      </h2>
+
+      <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-700 text-gray-300 text-sm uppercase">
+          <tr>
+            <th class="p-4">ID</th>
+            <th class="p-4">Restaurant</th>
+            <th class="p-4">WhatsApp</th>
+            <th class="p-4">Statut</th>
+            <th class="p-4 text-right">Action</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-700">
+
+          <tr *ngFor="let resto of restaurants" class="hover:bg-gray-750 transition">
+            <td class="p-4 font-mono text-sm text-gray-400">{{ resto.id }}</td>
+
+            <td class="p-4">
+              <div class="font-bold text-white">{{ resto.name }}</div>
+              <div class="text-xs text-gray-500">Gérant: {{ resto.ownerName }}</div>
+            </td>
+
+            <td class="p-4 text-gray-300">{{ resto.whatsappPhone }}</td>
+
+            <td class="p-4">
+                <span *ngIf="resto.active" class="bg-green-900 text-green-300 text-xs font-bold px-2 py-1 rounded-full border border-green-700">
+                  ACTIF
+                </span>
+              <span *ngIf="!resto.active" class="bg-red-900 text-red-300 text-xs font-bold px-2 py-1 rounded-full border border-red-700">
+                  BLOQUÉ
+                </span>
+            </td>
+
+            <td class="p-4 text-right">
+              <button (click)="toggleStatus(resto)"
+                      [class.bg-red-600]="resto.active"
+                      [class.hover:bg-red-500]="resto.active"
+                      [class.bg-green-600]="!resto.active"
+                      [class.hover:bg-green-500]="!resto.active"
+                      class="text-white text-xs font-bold px-3 py-2 rounded transition">
+                {{ resto.active ? 'Bloquer 🔒' : 'Activer ✅' }}
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="restaurants.length === 0">
+            <td colspan="5" class="p-8 text-center text-gray-500">
+              Aucun restaurant inscrit pour le moment.
+            </td>
+          </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

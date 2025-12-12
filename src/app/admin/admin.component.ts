@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Product } from '../models/product.model';
+import { Restaurant } from '../models/restaurant.model';
 
 @Component({
   selector: 'app-admin',
@@ -11,6 +12,14 @@ export class AdminComponent {
   productForm: FormGroup;
   isSubmitting = false;
   successMessage = '';
+  restaurants: Restaurant[] = []; // Liste pour le menu déroulant
+
+  ngOnInit() {
+    // On charge la liste des restos pour le select
+    this.apiService.getRestaurants().subscribe(data => {
+      this.restaurants = data;
+    });
+  }
 
   constructor(
     private fb: FormBuilder,

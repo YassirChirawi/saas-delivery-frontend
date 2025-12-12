@@ -4,7 +4,7 @@
 
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold text-gray-800">Ajouter un Plat</h2>
-      <a routerLink="/shop" class="text-sm text-blue-600 hover:underline">Voir la boutique →</a>
+      <a routerLink="/restaurants" class="text-sm text-blue-600 hover:underline">Voir les restaurants →</a>
     </div>
 
     <div *ngIf="successMessage" class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-center font-medium">
@@ -12,6 +12,16 @@
     </div>
 
     <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Restaurant</label>
+        <select formControlName="restaurantId" class="w-full p-2 border rounded-lg bg-white">
+          <option value="" disabled>Choisir le restaurant...</option>
+          <option *ngFor="let r of restaurants" [value]="r.id">
+            {{ r.name }} ({{ r.id }})
+          </option>
+        </select>
+      </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Nom du plat</label>
