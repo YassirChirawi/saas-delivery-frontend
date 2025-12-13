@@ -1,0 +1,30 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Connexion 🔐</h1>
+
+    <div *ngIf="errorMessage" class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm border border-red-200">
+      {{ errorMessage }}
+    </div>
+
+    <form (submit)="onLogin(); $event.preventDefault()">
+      <div class="mb-4">
+        <label class="block text-gray-600 text-sm font-bold mb-2">Email</label>
+        <input [(ngModel)]="email" name="email" type="email" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="admin@delivery.com" required>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-gray-600 text-sm font-bold mb-2">Mot de passe</label>
+        <input [(ngModel)]="password" name="password" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+        Se connecter
+      </button>
+    </form>
+
+    <div class="mt-6 text-center text-sm text-gray-400">
+      <a routerLink="/" class="hover:text-gray-600">← Retour au site</a>
+    </div>
+  </div>
+</div>

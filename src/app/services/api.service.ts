@@ -54,4 +54,8 @@ export class ApiService {
   toggleRestaurantStatus(id: string, status: boolean): Observable<any> {
     return this.http.put(`${this.baseUrl}/restaurants/${id}/activate?status=${status}`, {});
   }
+
+  getRestaurantByEmail(email: string): Observable<Restaurant> {
+    return this.http.get<Restaurant>(`${this.baseUrl}/restaurants/owner/${email}`);
+  }
 }

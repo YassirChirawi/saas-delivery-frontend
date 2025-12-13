@@ -3,9 +3,7 @@ export interface Restaurant {
   name: string;
   ownerName: string;
   whatsappPhone: string;
-
-  // 👇 CHANGEMENT ICI
   active: boolean;
-
   imageUrl?: string;
+  email: string;
 }

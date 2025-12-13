@@ -5,13 +5,24 @@ import { AdminComponent } from './admin/admin.component';
 import {SuperAdminComponent} from "./super-admin/super-admin.component";
 import {HomeComponent} from "./home/home.component";
 import {RestaurantListComponent} from "./restaurant-list/restaurant-list.component";
+import { LoginComponent } from './login/login.component';
+import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'restaurants', component: RestaurantListComponent },
   { path: 'shop/:id', component: ShopComponent },          // Page Client
-  { path: 'admin', component: AdminComponent },         // Page Admin
-  { path: 'super-admin', component: SuperAdminComponent }
+  {
+    path: 'admin',
+    component: AdminComponent,
+    canActivate: [AuthGuard] // Le vigile surveille l'entrée
+  },       // Page Admin
+  {
+    path: 'super-admin',
+    component: SuperAdminComponent,
+    canActivate: [AuthGuard] // Le vigile surveille l'entrée aussi
+  },
+  { path: 'login', component: LoginComponent },
 ];
 
 @NgModule({

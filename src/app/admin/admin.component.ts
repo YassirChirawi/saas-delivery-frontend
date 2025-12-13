@@ -1,69 +1,95 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../services/api.service';
-import { Product } from '../models/product.model';
+import { AuthService } from '../services/auth.service'; // 👈 Import Auth
 import { Restaurant } from '../models/restaurant.model';
+import { Product } from '../models/product.model';
 
 @Component({
   selector: 'app-admin',
   templateUrl: './admin.component.html'
 })
-export class AdminComponent {
+export class AdminComponent implements OnInit {
   productForm: FormGroup;
   isSubmitting = false;
   successMessage = '';
-  restaurants: Restaurant[] = []; // Liste pour le menu déroulant
 
-  ngOnInit() {
-    // On charge la liste des restos pour le select
-    this.apiService.getRestaurants().subscribe(data => {
-      this.restaurants = data;
-    });
-  }
+  // On ne stocke plus une liste, mais UN SEUL resto (le mien)
+  myRestaurant: Restaurant | null = null;
+  currentUserEmail: string | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private auth: AuthService // 👈 Injection Auth
   ) {
-    // Initialisation simplifiée sans gestion de fichier
     this.productForm = this.fb.group({
       name: ['', Validators.required],
       price: [0, [Validators.required, Validators.min(0)]],
       category: ['BURGER', Validators.required],
       description: ['', Validators.required],
-      imageUrl: [''], // Champ simple string
-      restaurantId: ['resto_01']
+      imageUrl: [''],
+      restaurantId: ['', Validators.required] // Toujours requis, mais rempli auto
     });
+  }
+
+  ngOnInit() {
+    // 1. Qui est connecté ?
+    this.currentUserEmail = this.auth.getCurrentEmail();
+
+    if (this.currentUserEmail) {
+      console.log("🔍 Recherche du restaurant pour :", this.currentUserEmail);
+
+      // 2. Chercher MON restaurant
+      this.apiService.getRestaurantByEmail(this.currentUserEmail).subscribe({
+        next: (resto) => {
+          if (resto) {
+            this.myRestaurant = resto;
+            console.log("✅ Restaurant trouvé :", resto.name);
+
+            // 3. Verrouiller le formulaire sur cet ID
+            this.productForm.patchValue({ restaurantId: resto.id });
+          } else {
+            console.warn("⚠️ Aucun restaurant associé à cet email !");
+          }
+        },
+        error: (err) => console.error(err)
+      });
+    }
   }
 
   onSubmit() {
     if (this.productForm.invalid) return;
-
     this.isSubmitting = true;
 
-    // On envoie directement les valeurs du formulaire
+    // On s'assure que l'ID est bien celui du resto chargé
+    if (this.myRestaurant) {
+      this.productForm.patchValue({ restaurantId: this.myRestaurant.id });
+    }
+
     const newProduct: Product = this.productForm.value;
 
     this.apiService.addProduct(newProduct).subscribe({
       next: () => {
         this.successMessage = 'Produit ajouté avec succès ! 🚀';
         this.isSubmitting = false;
-
-        // On remet à zéro
+        // Reset sans effacer l'ID du resto
         this.productForm.reset({
           category: 'BURGER',
-          restaurantId: 'resto_01',
+          restaurantId: this.myRestaurant?.id,
           price: 0,
           imageUrl: ''
         });
-
         setTimeout(() => this.successMessage = '', 3000);
       },
-      error: (err) => {
-        console.error(err);
+      error: () => {
         this.isSubmitting = false;
-        alert('Erreur lors de la sauvegarde');
+        alert('Erreur technique');
       }
     });
+
+  }
+  logout() {
+    this.auth.logout();
   }
 }

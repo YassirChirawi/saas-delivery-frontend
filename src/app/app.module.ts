@@ -11,7 +11,10 @@ import { AdminComponent } from './admin/admin.component';
 import { SuperAdminComponent } from './super-admin/super-admin.component';
 import { HomeComponent } from './home/home.component';
 import { RestaurantListComponent } from './restaurant-list/restaurant-list.component';
+import { LoginComponent } from './login/login.component';
 
+
+import { FormsModule } from '@angular/forms';
 @NgModule({
   declarations: [
     AppComponent,
@@ -19,14 +22,16 @@ import { RestaurantListComponent } from './restaurant-list/restaurant-list.compo
     AdminComponent,
     SuperAdminComponent,
     HomeComponent,
-    RestaurantListComponent
+    RestaurantListComponent,
+    LoginComponent
   ],
   imports: [
     BrowserModule,
     CommonModule,
     HttpClientModule,
     AppRoutingModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

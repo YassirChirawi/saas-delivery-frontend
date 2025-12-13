@@ -1,15 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { AuthService } from '../services/auth.service'; // Import
 
 @Component({
   selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  templateUrl: './home.component.html'
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
 
-  constructor() { }
+  // On injecte public pour l'utiliser dans le HTML
+  constructor(public auth: AuthService) {}
 
-  ngOnInit(): void {
+  logout() {
+    this.auth.logout();
   }
-
 }

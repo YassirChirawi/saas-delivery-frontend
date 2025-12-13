@@ -1,4 +1,21 @@
+<div class="absolute top-6 right-6 flex gap-4">
+
+  <button *ngIf="auth.user$ | async" (click)="logout()"
+          class="flex items-center gap-2 text-red-600 font-bold hover:underline cursor-pointer">
+    🚪 Déconnexion ({{ (auth.user$ | async)?.email }})
+  </button>
+
+  <a *ngIf="!(auth.user$ | async)" routerLink="/login"
+     class="flex items-center gap-2 text-gray-600 font-bold hover:text-blue-600 transition cursor-pointer">
+    🔐 Espace Partenaire
+  </a>
+
+</div>
+
+<div class="text-center mb-12 mt-12 animate-fade-in">
+
 <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+
 
   <div class="text-center mb-12 animate-fade-in">
     <h1 class="text-5xl font-extrabold text-gray-900 mb-4">

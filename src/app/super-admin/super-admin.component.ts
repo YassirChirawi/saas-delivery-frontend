@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms'; // Pour le formulaire
 import { ApiService } from '../services/api.service';
 import { Restaurant } from '../models/restaurant.model';
+import { AuthService } from '../services/auth.service'; // Import
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-super-admin',
@@ -14,10 +16,13 @@ export class SuperAdminComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private auth: AuthService, // Injection
+    private router: Router
   ) {
     // Initialisation du formulaire
     this.restoForm = this.fb.group({
+      email: ['', Validators.required],
       name: ['', Validators.required],
       id: ['', Validators.required], // C'est le "slug" (ex: pizza-king)
       ownerName: ['', Validators.required],
@@ -27,6 +32,13 @@ export class SuperAdminComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const currentEmail = this.auth.getCurrentEmail();
+
+    if (currentEmail !== 'super@admin.com') {
+      console.warn("⛔ ALERTE INTRUSION : Tentative d'accès par " + currentEmail);
+      this.router.navigate(['/admin']); // On le renvoie vers son espace à lui
+      return; // On arrête tout
+    }
     this.loadRestaurants();
   }
 
