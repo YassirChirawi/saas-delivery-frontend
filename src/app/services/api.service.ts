@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Product } from '../models/product.model';
 import { Restaurant } from '../models/restaurant.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ import { Restaurant } from '../models/restaurant.model';
 export class ApiService {
 
   // 1. URL DE BASE (Attention, elle s'arrête à /api/v1)
-  private baseUrl = 'http://localhost:8080/api/v1';
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

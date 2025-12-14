@@ -1,6 +1,7 @@
 export const environment = {
-  production: false,
-   firebase : {
+  production: true,
+  apiUrl:'https://saas-delivery-backend.onrender.com',
+  firebase : {
     apiKey: "AIzaSyDfqIM3s830FDr-2b3Gl_UMPInxbXchzIc",
     authDomain: "saas-delivery-dev-d16dc.firebaseapp.com",
     projectId: "saas-delivery-dev-d16dc",
@@ -8,4 +9,5 @@ export const environment = {
     messagingSenderId: "694810201742",
     appId: "1:694810201742:web:61ac9b50e193b4662043df"
   }
+
 };
