@@ -58,4 +58,41 @@ export class ApiService {
   getRestaurantByEmail(email: string): Observable<Restaurant> {
     return this.http.get<Restaurant>(`${this.baseUrl}/restaurants/owner/${email}`);
   }
+
+  // Update
+  updateProduct(id: string, product: Product): Observable<any> {
+    return this.http.put(`${this.baseUrl}/products/${id}`, product);
+  }
+
+  // Delete
+  deleteProduct(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/products/${id}`, { responseType: 'text' });
+  }
+
+  // Ajouter une demande de partenariat
+  addPartnerRequest(request: any): Observable<any> {
+    request.status = 'PENDING';
+
+    // 👇 AJOUTE LE 3ème ARGUMENT ICI : { responseType: 'text' }
+    return this.http.post(`${this.baseUrl}/requests`, request, { responseType: 'text' });
+  }
+
+  // Récupérer les demandes
+  getRequests(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/requests`);
+  }
+
+  // Supprimer une demande
+  deleteRequest(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/requests/${id}`, { responseType: 'text' });
+  }
+
+  updateRestaurant(id: string, restaurant: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/restaurants/${id}`, restaurant, { responseType: 'text' });
+  }
+
+  // Supprimer un restaurant (La méthode qui te manque)
+  deleteRestaurant(id: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/restaurants/${id}`, { responseType: 'text' });
+  }
 }

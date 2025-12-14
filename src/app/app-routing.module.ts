@@ -7,6 +7,8 @@ import {HomeComponent} from "./home/home.component";
 import {RestaurantListComponent} from "./restaurant-list/restaurant-list.component";
 import { LoginComponent } from './login/login.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RegisterComponent} from "./register/register.component";
+import {JoinUsComponent} from "./join-us/join-us.component";
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -23,6 +25,8 @@ const routes: Routes = [
     canActivate: [AuthGuard] // Le vigile surveille l'entrée aussi
   },
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'join-us', component: JoinUsComponent }
 ];
 
 @NgModule({

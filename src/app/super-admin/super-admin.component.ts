@@ -1,103 +1,182 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms'; // Pour le formulaire
-import { ApiService } from '../services/api.service';
-import { Restaurant } from '../models/restaurant.model';
-import { AuthService } from '../services/auth.service'; // Import
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms'; // 👈 Nécessaire pour l'ajout manuel
+import { getAuth } from 'firebase/auth';
+
+// Services
+import { ApiService } from '../services/api.service';
+import { AuthService, UserRole } from '../services/auth.service';
+
+// Modèles
+import { Restaurant } from '../models/restaurant.model';
+import { PartnerRequest } from '../models/request.model';
 
 @Component({
   selector: 'app-super-admin',
   templateUrl: './super-admin.component.html'
 })
 export class SuperAdminComponent implements OnInit {
-  restaurants: Restaurant[] = [];
-  restoForm: FormGroup;
-  isLoading = false;
+
+  // Données
+  requests: PartnerRequest[] = [];    // Demandes en attente
+  restaurants: Restaurant[] = [];     // Restaurants actifs
+
+  // Formulaire (Pour l'ajout manuel)
+  restaurantForm: FormGroup;
+  isSubmitting = false;
 
   constructor(
     private apiService: ApiService,
-    private fb: FormBuilder,
-    private auth: AuthService, // Injection
-    private router: Router
+    private auth: AuthService,
+    private router: Router,
+    private fb: FormBuilder // 👈 Injection du constructeur de formulaire
   ) {
-    // Initialisation du formulaire
-    this.restoForm = this.fb.group({
-      email: ['', Validators.required],
+    // Initialisation du formulaire manuel
+    this.restaurantForm = this.fb.group({
       name: ['', Validators.required],
-      id: ['', Validators.required], // C'est le "slug" (ex: pizza-king)
-      ownerName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      address: ['', Validators.required],
+      description: [''],
       whatsappPhone: ['', Validators.required],
-      active: [true] // Activé par défaut à la création
+      imageUrl: ['https://placehold.co/600x400?text=Restaurant'] // Image par défaut
     });
   }
 
-  ngOnInit(): void {
-    const currentEmail = this.auth.getCurrentEmail();
+  async ngOnInit() {
+    // 🔒 1. SÉCURITÉ
+    const authInstance = getAuth();
+    const currentUser = authInstance.currentUser;
 
-    if (currentEmail !== 'super@admin.com') {
-      console.warn("⛔ ALERTE INTRUSION : Tentative d'accès par " + currentEmail);
-      this.router.navigate(['/admin']); // On le renvoie vers son espace à lui
-      return; // On arrête tout
+    if (!currentUser) {
+      this.router.navigate(['/login']);
+      return;
     }
-    this.loadRestaurants();
+
+    const profile = await this.auth.getUserProfile(currentUser.uid);
+
+    if (!profile || profile.role !== UserRole.SUPER_ADMIN) {
+      console.warn("⛔ Accès refusé : Vous n'êtes pas Super Admin.");
+      this.router.navigate(['/admin']);
+      return;
+    }
+
+    // ✅ 2. CHARGEMENT DES DONNÉES
+    this.loadData();
   }
 
-  // Charger la liste depuis le backend
-  loadRestaurants() {
+  loadData() {
+    // Charger les demandes
+    this.apiService.getRequests().subscribe({
+      next: (data) => this.requests = data,
+      error: (err) => console.error("Erreur chargement demandes", err)
+    });
+
+    // Charger les restaurants
     this.apiService.getRestaurants().subscribe({
       next: (data) => this.restaurants = data,
-      error: (err) => console.error('Erreur chargement restos', err)
+      error: (err) => console.error("Erreur chargement restaurants", err)
     });
   }
 
-  // Créer un nouveau restaurant
-  onSubmit() {
-    if (this.restoForm.invalid) return;
-    this.isLoading = true;
+  // =========================================================
+  // 🆕 PARTIE 1 : GESTION DES DEMANDES (WORKFLOW AUTOMATIQUE)
+  // =========================================================
 
-    const newResto: Restaurant = this.restoForm.value;
+  approveRequest(req: PartnerRequest) {
+    if (!confirm(`Valider la demande de "${req.restaurantName}" ?`)) return;
+
+    // Création de l'objet Restaurant basé sur la demande
+    const newRestaurant: Restaurant = {
+      name: req.restaurantName,
+      email: req.email,
+      whatsappPhone: req.phone,
+      description: req.description || "Nouveau restaurant.",
+      address: req.address,
+      imageUrl: 'https://placehold.co/600x400?text=Restaurant',
+      active: true
+    };
+
+    // 1. Créer le resto
+    this.apiService.createRestaurant(newRestaurant).subscribe({
+      next: () => {
+        // 2. Supprimer la demande
+        this.deleteRequestAndRefresh(req.id!);
+        alert(`✅ Restaurant créé ! Dites à ${req.ownerName} de s'inscrire avec : ${req.email}`);
+      },
+      error: () => alert("Erreur lors de la validation.")
+    });
+  }
+
+  rejectRequest(req: PartnerRequest) {
+    if (!confirm("Refuser définitivement cette demande ?")) return;
+    this.deleteRequestAndRefresh(req.id!);
+  }
+
+  private deleteRequestAndRefresh(id: string) {
+    this.apiService.deleteRequest(id).subscribe(() => this.loadData());
+  }
+
+  contactOwner(req: PartnerRequest) {
+    window.location.href = `mailto:${req.email}?subject=Votre demande d'inscription`;
+  }
+
+  // =========================================================
+  // 🛠️ PARTIE 2 : GESTION MANUELLE (ANCIENNES FONCTIONS)
+  // =========================================================
+
+  // 1. AJOUTER MANUELLEMENT (Via le formulaire du bas)
+  onManualSubmit() {
+    if (this.restaurantForm.invalid) return;
+    this.isSubmitting = true;
+
+    const newResto: Restaurant = {
+      ...this.restaurantForm.value,
+      active: true
+    };
 
     this.apiService.createRestaurant(newResto).subscribe({
       next: () => {
-        alert('Restaurant créé avec succès ! 🏢');
-        this.loadRestaurants(); // Rafraîchir la liste
-        this.restoForm.reset({ isActive: true }); // Reset form
-        this.isLoading = false;
+        alert("Restaurant ajouté manuellement !");
+        this.restaurantForm.reset({ imageUrl: 'https://placehold.co/600x400?text=Restaurant' });
+        this.isSubmitting = false;
+        this.loadData();
       },
       error: (err) => {
-        alert('Erreur lors de la création');
-        this.isLoading = false;
+        console.error(err);
+        this.isSubmitting = false;
       }
     });
   }
 
-  // Activer / Bloquer un restaurant
+  // 2. ACTIVER / DÉSACTIVER (Toggle)
   toggleStatus(resto: Restaurant) {
-    // 1. On calcule le nouvel état (l'inverse de l'actuel)
-    const newStatus = !resto.active; // Remplace isActive
+    // On inverse le statut localement pour l'effet visuel immédiat
+    const newStatus = !resto.active;
+    const originalStatus = resto.active; // Backup en cas d'erreur
     resto.active = newStatus;
 
-    // 3. Envoi au Backend
-    this.apiService.toggleRestaurantStatus(resto.id, newStatus).subscribe({
-      next: () => {
-        console.log(`Statut mis à jour pour ${resto.name} : ${newStatus}`);
-      },
-      error: (err) => {
-        // Si ça plante, on revient en arrière visuellement et on alerte
-        console.error('Erreur update statut', err);
-        resto.active = !newStatus;
-        alert("Impossible de sauvegarder le changement !");
+    // On envoie la mise à jour au backend
+    // (Assure-toi d'avoir updateRestaurant dans ApiService)
+    this.apiService.updateRestaurant(resto.id!, resto).subscribe({
+      next: () => console.log(`Statut de ${resto.name} changé : ${newStatus}`),
+      error: () => {
+        alert("Erreur lors du changement de statut.");
+        resto.active = originalStatus; // On remet comme avant
       }
     });
   }
 
-  // Petit helper pour générer l'ID automatiquement quand on tape le nom
-  // Ex: "Chez Mario" -> "chez-mario"
-  generateSlug() {
-    const name = this.restoForm.get('name')?.value;
-    if (name) {
-      const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-      this.restoForm.get('id')?.setValue(slug);
+  // 3. SUPPRIMER UN RESTAURANT
+  deleteRestaurant(id: string) {
+    if (confirm("⚠️ Attention : Supprimer ce restaurant effacera aussi son menu. Continuer ?")) {
+      this.apiService.deleteRestaurant(id).subscribe({
+        next: () => this.loadData(),
+        error: () => alert("Erreur lors de la suppression.")
+      });
     }
+  }
+
+  logout() {
+    this.auth.logout();
   }
 }

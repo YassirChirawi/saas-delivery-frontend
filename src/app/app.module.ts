@@ -15,6 +15,9 @@ import { LoginComponent } from './login/login.component';
 
 
 import { FormsModule } from '@angular/forms';
+import { RegisterComponent } from './register/register.component';
+import { JoinUsComponent } from './join-us/join-us.component';
+import { HeaderComponent } from './header/header.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -23,7 +26,10 @@ import { FormsModule } from '@angular/forms';
     SuperAdminComponent,
     HomeComponent,
     RestaurantListComponent,
-    LoginComponent
+    LoginComponent,
+    RegisterComponent,
+    JoinUsComponent,
+    HeaderComponent
   ],
   imports: [
     BrowserModule,

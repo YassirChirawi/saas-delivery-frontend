@@ -1,4 +1,11 @@
-<div class="absolute top-6 right-6 flex gap-4">
+<div class="absolute top-6 right-6 flex items-center gap-6 z-50">
+
+  <a routerLink="/join-us"
+     class="text-gray-600 font-bold hover:text-green-600 transition cursor-pointer flex items-center gap-2 hover:scale-105 transform">
+    🚀 Devenir Partenaire
+  </a>
+
+  <div class="h-6 w-px bg-gray-300"></div>
 
   <button *ngIf="auth.user$ | async" (click)="logout()"
           class="flex items-center gap-2 text-red-600 font-bold hover:underline cursor-pointer">
@@ -6,7 +13,7 @@
   </button>
 
   <a *ngIf="!(auth.user$ | async)" routerLink="/login"
-     class="flex items-center gap-2 text-gray-600 font-bold hover:text-blue-600 transition cursor-pointer">
+     class="flex items-center gap-2 text-blue-600 font-bold hover:text-blue-800 transition cursor-pointer">
     🔐 Espace Partenaire
   </a>
 

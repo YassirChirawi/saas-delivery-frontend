@@ -1,9 +1,11 @@
 export interface Restaurant {
-  id: string;
+  id?: string;
   name: string;
-  ownerName: string;
+  ownerName?: string;
   whatsappPhone: string;
   active: boolean;
   imageUrl?: string;
   email: string;
+  description?: string;
+  address?: string;
 }

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../services/api.service';
-import { AuthService } from '../services/auth.service'; // 👈 Import Auth
+import { AuthService, UserRole } from '../services/auth.service';
 import { Restaurant } from '../models/restaurant.model';
 import { Product } from '../models/product.model';
+import { Router } from '@angular/router';
+import { getAuth } from 'firebase/auth';
 
 @Component({
   selector: 'app-admin',
@@ -11,17 +13,17 @@ import { Product } from '../models/product.model';
 })
 export class AdminComponent implements OnInit {
   productForm: FormGroup;
-  isSubmitting = false;
-  successMessage = '';
-
-  // On ne stocke plus une liste, mais UN SEUL resto (le mien)
   myRestaurant: Restaurant | null = null;
-  currentUserEmail: string | null = null;
+  products: Product[] = []; // 👈 LA LISTE DES PRODUITS
+  isSubmitting = false;
+  isEditing = false; // 👈 MODE ÉDITION
+  editingProductId: string | null = null; // ID du produit en cours d'édition
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
-    private auth: AuthService // 👈 Injection Auth
+    public auth: AuthService,
+    private router: Router
   ) {
     this.productForm = this.fb.group({
       name: ['', Validators.required],
@@ -29,66 +31,121 @@ export class AdminComponent implements OnInit {
       category: ['BURGER', Validators.required],
       description: ['', Validators.required],
       imageUrl: [''],
-      restaurantId: ['', Validators.required] // Toujours requis, mais rempli auto
+      restaurantId: ['', Validators.required]
     });
   }
 
-  ngOnInit() {
-    // 1. Qui est connecté ?
-    this.currentUserEmail = this.auth.getCurrentEmail();
+  async ngOnInit() {
+    const authInstance = getAuth();
+    const currentUser = authInstance.currentUser;
 
-    if (this.currentUserEmail) {
-      console.log("🔍 Recherche du restaurant pour :", this.currentUserEmail);
+    if (!currentUser) return; // AuthGuard gère la redirection
 
-      // 2. Chercher MON restaurant
-      this.apiService.getRestaurantByEmail(this.currentUserEmail).subscribe({
+    const profile = await this.auth.getUserProfile(currentUser.uid);
+
+    if (profile && profile.role === UserRole.SUPER_ADMIN) {
+      this.router.navigate(['/super-admin']);
+      return;
+    }
+
+    if (profile && profile.email) {
+      this.apiService.getRestaurantByEmail(profile.email).subscribe({
         next: (resto) => {
           if (resto) {
             this.myRestaurant = resto;
-            console.log("✅ Restaurant trouvé :", resto.name);
-
-            // 3. Verrouiller le formulaire sur cet ID
             this.productForm.patchValue({ restaurantId: resto.id });
-          } else {
-            console.warn("⚠️ Aucun restaurant associé à cet email !");
+            // 👇 CHARGER LES PRODUITS DU RESTO
+            this.loadProducts(resto.id!);
           }
-        },
-        error: (err) => console.error(err)
+        }
       });
     }
   }
 
-  onSubmit() {
-    if (this.productForm.invalid) return;
-    this.isSubmitting = true;
-
-    // On s'assure que l'ID est bien celui du resto chargé
-    if (this.myRestaurant) {
-      this.productForm.patchValue({ restaurantId: this.myRestaurant.id });
-    }
-
-    const newProduct: Product = this.productForm.value;
-
-    this.apiService.addProduct(newProduct).subscribe({
-      next: () => {
-        this.successMessage = 'Produit ajouté avec succès ! 🚀';
-        this.isSubmitting = false;
-        // Reset sans effacer l'ID du resto
-        this.productForm.reset({
-          category: 'BURGER',
-          restaurantId: this.myRestaurant?.id,
-          price: 0,
-          imageUrl: ''
-        });
-        setTimeout(() => this.successMessage = '', 3000);
-      },
-      error: () => {
-        this.isSubmitting = false;
-        alert('Erreur technique');
+  // 1. CHARGER LES PRODUITS
+  loadProducts(restaurantId: string) {
+    this.apiService.getProductsByRestaurant(restaurantId).subscribe({
+      next: (data) => {
+        this.products = data;
       }
     });
-
   }
+
+  // 2. SOUMETTRE (Ajout OU Modification)
+  onSubmit() {
+    if (this.productForm.invalid || !this.myRestaurant) return;
+    this.isSubmitting = true;
+
+    const productData: Product = this.productForm.value;
+    // On s'assure que le restaurantId est bien celui du resto actuel
+    if (this.myRestaurant.id != null) {
+      productData.restaurantId = this.myRestaurant.id;
+    }
+
+    if (this.isEditing && this.editingProductId) {
+      // --- LOGIQUE DE MISE À JOUR ---
+      // NOTE: Il faut ajouter updateProduct dans ApiService (voir étape 3)
+      // Pour l'instant, on va simuler ou tu devras l'ajouter
+      console.log("Mise à jour de :", this.editingProductId);
+      // TODO: Appel API update ici
+      this.isSubmitting = false; // Temporaire
+
+    } else {
+      // --- LOGIQUE D'AJOUT ---
+      this.apiService.addProduct(productData).subscribe({
+        next: () => {
+          this.isSubmitting = false;
+          this.resetForm();
+          this.loadProducts(this.myRestaurant!.id!); // Recharger la liste
+        },
+        error: () => this.isSubmitting = false
+      });
+    }
+  }
+
+  // 3. PRÉPARER L'ÉDITION
+  editProduct(product: Product) {
+    this.isEditing = true;
+    this.editingProductId = product.id!; // L'ID Firestore
+
+    // Remplir le formulaire avec les données du produit
+    this.productForm.patchValue({
+      name: product.name,
+      price: product.price,
+      category: product.category,
+      description: product.description,
+      imageUrl: product.imageUrl,
+      restaurantId: product.restaurantId
+    });
+
+    // Scroll vers le haut (UX)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // 4. ANNULER L'ÉDITION
+  cancelEdit() {
+    this.resetForm();
+  }
+
+  // 5. SUPPRIMER UN PRODUIT
+  deleteProduct(id: string) {
+    if(confirm('Voulez-vous vraiment supprimer ce plat ?')) {
+      // NOTE: Il faut ajouter deleteProduct dans ApiService (voir étape 3)
+      console.log("Suppression de :", id);
+      // TODO: Appel API delete ici
+    }
+  }
+
+  resetForm() {
+    this.isEditing = false;
+    this.editingProductId = null;
+    this.productForm.reset({
+      category: 'BURGER',
+      restaurantId: this.myRestaurant?.id,
+      price: 0
+    });
+  }
+
   logout() {
     this.auth.logout();
   }
