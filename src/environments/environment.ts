@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl:'https://saas-delivery-backend.onrender.com',
+  apiUrl:'https://sherwood-obstructive-nonchromatically.ngrok-free.dev ',
   firebase : {
     apiKey: "AIzaSyDfqIM3s830FDr-2b3Gl_UMPInxbXchzIc",
     authDomain: "saas-delivery-dev-d16dc.firebaseapp.com",
