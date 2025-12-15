@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl:'https://saas-delivery-backend.onrender.com',
+  apiUrl:'https://saas-delivery-backend.onrender.com/api/v1',
   firebase : {
     apiKey: "AIzaSyDfqIM3s830FDr-2b3Gl_UMPInxbXchzIc",
     authDomain: "saas-delivery-dev-d16dc.firebaseapp.com",
