@@ -1,0 +1,103 @@
+/* shop.component.css */
+
+/* 1. L'image de fond et l'en-tête */
+.resto-header {
+  height: 250px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  color: white;
+  border-radius: 0 0 20px 20px; /* Arrondi en bas */
+  overflow: hidden;
+}
+
+.overlay {
+  background: rgba(0, 0, 0, 0.5); /* Assombrit l'image pour lire le texte */
+  height: 100%;
+  display: flex;
+  align-items: flex-end; /* Texte en bas */
+  padding: 20px;
+}
+
+/* 2. Les filtres et la recherche */
+.filters-section {
+  padding: 20px;
+}
+
+.categories-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Permet de scroller horizontalement */
+  padding-bottom: 10px;
+}
+
+.chip {
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+}
+
+.chip.active {
+  background-color: #ff9800; /* Orange (couleur classique food) */
+  color: white;
+  border-color: #ff9800;
+}
+
+/* 3. La grille des produits (Pour qu'ils ne soient pas en liste verticale) */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Grille responsive */
+  gap: 20px;
+  padding: 20px;
+  padding-bottom: 80px; /* Place pour le panier flottant */
+}
+
+.product-card {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.btn-add {
+  background: #ff9800;
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* 4. Le panier flottant en bas */
+.sticky-cart {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  width: 90%;
+  max-width: 400px;
+  padding: 15px 25px;
+  border-radius: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 100;
+}
