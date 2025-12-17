@@ -96,4 +96,15 @@ export class ApiService {
   deleteRestaurant(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/restaurants/${id}`, { responseType: 'text' });
   }
+
+  addToFavoritesCloud(userId: string, restaurantId: string) {
+    // Appel HTTP vers ton Backend Spring Boot
+    return this.http.post(`${this.baseUrl}/users/${userId}/favorites`, { restaurantId });
+  }
+
+  createOrder(orderData: any): Observable<any> {
+    // Note : On ajoute { responseType: 'text' } car ton Backend renvoie juste un ID (String)
+    // et pas un objet JSON complet. Sinon Angular va essayer de parser et fera une erreur.
+    return this.http.post(`${this.baseUrl}/orders`, orderData, { responseType: 'text' });
+  }
 }

@@ -1,4 +1,5 @@
 export interface Product {
+  quantity: any;
   id?: string;
   name: string;
   description: string;
@@ -7,3 +8,4 @@ export interface Product {
   imageUrl?: string;
   restaurantId: string;
 }
+

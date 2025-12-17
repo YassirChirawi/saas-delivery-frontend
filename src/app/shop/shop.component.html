@@ -1,89 +1,119 @@
-<div class="min-h-screen bg-gray-50 pb-32"> <header class="bg-white shadow-sm p-4 sticky top-0 z-10">
+<div class="shop-container" *ngIf="currentRestaurant">
 
-  <div class="max-w-6xl mx-auto flex justify-between items-center">
-    <h1 class="text-2xl font-extrabold text-gray-900">
-      🍔 Fast<span class="text-orange-600">Delivery</span>
-    </h1>
-    <div class="text-sm font-bold text-gray-600">
-      {{ cartCount }} articles
+  <div class="resto-header" [style.backgroundImage]="'url(' + currentRestaurant.imageUrl + ')'">
+    <div class="overlay">
+      <div class="header-content">
+        <h1>{{ currentRestaurant.name }}</h1>
+        <div class="badges">
+          <span class="badge">⭐ 4.5/5</span>
+          <button class="btn-fav" (click)="toggleFavorite()">
+            {{ isFavorite ? '❤️' : '🤍' }}
+          </button>
+        </div>
+        <p class="desc">{{ currentRestaurant.description }}</p>
+      </div>
     </div>
   </div>
-</header>
 
-  <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="filters-section">
+    <div class="search-box">
+      <input type="text" placeholder="🔍 Rechercher un plat..."
+             [(ngModel)]="searchTerm" (input)="applyFilters()">
+    </div>
 
-    <div *ngFor="let product of products" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all">
+    <div class="categories-scroll">
+      <button class="chip"
+              [class.active]="selectedCategory === 'Tout'"
+              (click)="selectCategory('Tout')">
+        Tout
+      </button>
+      <button class="chip" *ngFor="let cat of uniqueCategories"
+              [class.active]="selectedCategory === cat"
+              (click)="selectCategory(cat)">
+        {{ getEmoji(cat) }} {{ cat }}
+      </button>
+    </div>
+  </div>
 
-      <div class="h-48 bg-gray-100 flex items-center justify-center overflow-hidden relative">
-        <img *ngIf="product.imageUrl" [src]="product.imageUrl" alt="{{ product.name }}" class="w-full h-full object-cover">
-        <span *ngIf="!product.imageUrl" class="text-6xl">{{ getEmoji(product.category) }}</span>
+  <div class="products-grid">
+    <div *ngFor="let product of displayedProducts" class="product-card">
+      <div class="prod-info">
+        <h3>{{ product.name }}</h3>
+        <p class="prod-desc">{{ product.description }}</p>
+        <span class="price">{{ product.price }} €</span>
+      </div>
+      <div class="prod-action">
+        <button class="btn-add" (click)="addToCart(product)">+</button>
+      </div>
+    </div>
+
+    <div *ngIf="displayedProducts.length === 0" class="empty-state">
+      <p>Aucun plat trouvé pour cette recherche 😢</p>
+    </div>
+  </div>
+
+  <div class="sticky-cart" *ngIf="cartCount > 0" (click)="openCheckout()">
+    <div class="cart-summary">
+      <span class="count-badge">{{ cartCount }}</span>
+      <span>Voir le panier</span>
+    </div>
+    <span class="total-price">{{ cartTotal }} €</span>
+  </div>
+
+</div>
+
+<div class="modal-overlay" *ngIf="showCheckoutModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Votre Panier 🛒</h2>
+      <button class="close-icon" (click)="closeCheckout()">✖</button>
+    </div>
+
+    <div class="delivery-toggle">
+      <button [class.active]="deliveryOption === 'pickup'" (click)="deliveryOption = 'pickup'">Emporter</button>
+      <button [class.active]="deliveryOption === 'delivery'" (click)="deliveryOption = 'delivery'">Livraison (+2€)</button>
+    </div>
+
+    <div class="cart-items-preview">
+      <p>Total à payer : <strong>{{ cartTotal + (deliveryOption === 'delivery' ? 2 : 0) }} €</strong></p>
+    </div>
+
+    <div class="form-group">
+      <label>Une remarque ? (Sans oignons, code porte...)</label>
+      <textarea [(ngModel)]="orderNote" rows="2" placeholder="Instructions spéciales..."></textarea>
+    </div>
+
+    <hr class="divider">
+
+    <div *ngIf="currentUser">
+      <div class="user-welcome">
+        <p>👋 <strong>{{ currentUser.email }}</strong></p>
+        <small>Vos points de fidélité seront ajoutés.</small>
+      </div>
+      <button class="btn-confirm" (click)="confirmOrder('USER')">
+        Valider la commande
+      </button>
+    </div>
+
+    <div *ngIf="!currentUser">
+
+      <div class="register-prompt">
+        <p>✨ Créez un compte pour suivre votre commande !</p>
+        <button class="btn-outline" (click)="goToRegister()">Créer mon compte</button>
       </div>
 
-      <div class="p-5">
-        <div class="flex justify-between items-start mb-2">
-          <h2 class="text-lg font-bold text-gray-800">{{ product.name }}</h2>
-          <span class="bg-green-100 text-green-700 text-sm font-bold px-2 py-1 rounded-full">
-              {{ product.price }} €
-            </span>
-        </div>
-        <p class="text-gray-500 text-sm mb-4 h-10 overflow-hidden">{{ product.description }}</p>
+      <p class="or-text">- OU -</p>
 
-        <button (click)="addToCart(product)" class="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 active:scale-95 transition">
-          Ajouter au panier +
+      <div class="guest-form">
+        <h4>Commande rapide (Invité)</h4>
+        <input type="text" [(ngModel)]="guestName" placeholder="Votre Nom" class="input-field">
+        <input type="tel" [(ngModel)]="guestPhone" placeholder="Votre Téléphone" class="input-field">
+
+        <button class="btn-confirm guest-btn" (click)="confirmOrder('GUEST')">
+          Commander sans compte
         </button>
       </div>
     </div>
 
-  </main>
-
-  <div *ngIf="cartCount > 0" class="max-w-6xl mx-auto px-6 mt-4">
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-orange-100">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Mode de réception</h3>
-
-      <div class="flex flex-col md:flex-row gap-4">
-        <label class="flex items-center space-x-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition w-full"
-               [class.border-orange-500]="deliveryOption === 'pickup'"
-               [class.bg-orange-50]="deliveryOption === 'pickup'">
-          <input type="radio" name="delivery" value="pickup" (change)="setDelivery('pickup')" [checked]="deliveryOption === 'pickup'" class="w-5 h-5 text-orange-600">
-          <div>
-            <span class="font-bold block">🛍️ À emporter (Pick-up)</span>
-            <span class="text-sm text-gray-500">Gratuit</span>
-          </div>
-        </label>
-
-        <label class="flex items-center space-x-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition w-full"
-               [class.border-orange-500]="deliveryOption === 'delivery'"
-               [class.bg-orange-50]="deliveryOption === 'delivery'">
-          <input type="radio" name="delivery" value="delivery" (change)="setDelivery('delivery')" [checked]="deliveryOption === 'delivery'" class="w-5 h-5 text-orange-600">
-          <div>
-            <span class="font-bold block">🛵 Livraison</span>
-            <span class="text-sm text-gray-500">À domicile</span>
-          </div>
-        </label>
-      </div>
-
-      <div *ngIf="deliveryOption === 'delivery'" class="mt-4 animate-fade-in">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Votre Zone :</label>
-        <select (change)="onZoneChange($event)" class="w-full p-3 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-orange-500">
-          <option value="2">Zone 1 : Centre-Ville (+2.00€)</option>
-          <option value="5">Zone 2 : Périphérie (+5.00€)</option>
-          <option value="10">Zone 3 : Loin (+10.00€)</option>
-        </select>
-      </div>
-
-    </div>
   </div>
-
-  <div *ngIf="cartCount > 0" class="fixed bottom-6 left-6 right-6 md:left-auto md:right-10 md:w-96 z-50">
-    <button (click)="orderOnWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white shadow-xl rounded-2xl p-4 flex justify-between items-center transition-transform hover:scale-105">
-      <div class="flex flex-col items-start">
-        <span class="font-bold text-lg">Commander sur WhatsApp</span>
-        <span class="text-xs opacity-90">{{ cartCount }} articles</span>
-      </div>
-      <span class="bg-white text-green-600 font-bold px-3 py-1 rounded-lg">
-        {{ cartTotal }} €
-      </span>
-    </button>
-  </div>
-
 </div>
