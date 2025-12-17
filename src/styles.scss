@@ -1,4 +1,177 @@
-/* You can add global styles to this file, and also import other style files */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* =========================================
+   1. VARIABLES & THÈME (Design System)
+   ========================================= */
+:root {
+  /* Palette de couleurs */
+  --primary: #ff4757;       /* Rouge Appétissant */
+  --primary-hover: #e04050;
+  --secondary: #2f3542;     /* Noir Charbon (Texte) */
+  --accent: #2ed573;        /* Vert Validation */
+  --warning: #ffa502;       /* Jaune Étoiles */
+  --danger: #ff6b81;        /* Rouge Erreur */
+
+  /* Arrière-plans */
+  --bg-app: #f8f9fa;        /* Gris très clair (fond site) */
+  --bg-card: #ffffff;       /* Blanc pur (cartes) */
+  --bg-input: #f1f2f6;      /* Gris input */
+
+  /* Typographie & Formes */
+  --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 25px;
+  --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================================
+   2. RESET & BASE
+   ========================================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-main);
+  background-color: var(--bg-app);
+  color: var(--secondary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  margin-top: 0;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* =========================================
+   3. COMPOSANTS UI (Boutons, Inputs...)
+   ========================================= */
+
+/* --- BOUTONS --- */
+.btn-primary, .btn-secondary, .btn-outline {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: var(--radius-m);
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+/* Bouton Principal (Rouge) */
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
+}
+.btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Bouton Secondaire (Gris sombre) */
+.btn-secondary {
+  background-color: var(--secondary);
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: #1e222b;
+}
+
+/* Bouton Outline (Bordure seulement) */
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+.btn-outline:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* --- FORMULAIRES (Inputs) --- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+textarea,
+select {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 15px;
+  border: 2px solid transparent;
+  background-color: var(--bg-input);
+  border-radius: var(--radius-m);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  background-color: white;
+  border-color: var(--primary); /* Bordure rouge au focus */
+  box-shadow: 0 0 0 4px rgba(255, 71, 87, 0.1);
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #57606f;
+}
+
+/* --- CARTES (Containers blancs) --- */
+.card-box {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* =========================================
+   4. UTILITAIRES & LAYOUT
+   ========================================= */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.text-center { text-align: center; }
+.mt-20 { margin-top: 20px; }
+.mb-20 { margin-bottom: 20px; }
+
+/* Message d'erreur */
+.error-msg {
+  color: var(--danger);
+  background: rgba(255, 107, 129, 0.1);
+  padding: 10px;
+  border-radius: var(--radius-s);
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  border-left: 3px solid var(--danger);
+}

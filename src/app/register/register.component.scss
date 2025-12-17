@@ -1,0 +1,24 @@
+/* Pour centrer le formulaire au milieu de l'écran */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('https://source.unsplash.com/1600x900/?food,restaurant') no-repeat center center/cover;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px; /* Pas trop large */
+  backdrop-filter: blur(10px); /* Petit effet de flou moderne */
+  background: rgba(255, 255, 255, 0.95); /* Blanc légèrement transparent */
+}
+
+.subtitle {
+  color: #747d8c;
+  margin-bottom: 30px;
+}
+
+.w-100 {
+  width: 100%;
+}

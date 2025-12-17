@@ -9,7 +9,7 @@ import { Restaurant } from '../models/restaurant.model';
 @Component({
   selector: 'app-shop',
   templateUrl: './shop.component.html',
-  styleUrls: ['./shop.component.css'] // Assure-toi d'avoir le CSS pour le modal
+  styleUrls: ['./shop.component.scss'] // Assure-toi d'avoir le CSS pour le modal
 })
 export class ShopComponent implements OnInit {
 
