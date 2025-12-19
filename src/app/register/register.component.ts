@@ -1,62 +1,64 @@
 import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-register',
-  templateUrl: './register.component.html'
-
+  templateUrl: './register.component.html',
 })
 export class RegisterComponent {
 
-  // Gestion des onglets
-  activeTab: 'client' | 'restaurant' = 'client';
+  registerForm: FormGroup;
+  errorMessage: string = '';
+  successMessage: string = ''; // 👈 Pour le message de confirmation
+  isLoading: boolean = false;
 
-  // Données du client
-  client = {
-    nom: '',
-    prenom: '',
-    email: '',
-    phone: '',
-    address: '' // Champ très important
-  };
-
-  // Logique du Code Partenaire
-  accessCode: string = '';
-  isRestoUnlocked: boolean = false;
-  codeError: boolean = false;
-
-  // Données du restaurant (une fois débloqué)
-  restaurant = {
-    name: '',
-    siret: '',
-    email: '',
-    password: ''
-  };
-
-  // Fonction pour changer d'onglet
-  switchTab(tab: 'client' | 'restaurant') {
-    this.activeTab = tab;
-    this.codeError = false; // Reset l'erreur si on change
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService,
+    private router: Router
+  ) {
+    // On ajoute le champ password
+    this.registerForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]], // 👈 OBLIGATOIRE (min 6 caractères pour Firebase)
+      name: ['', Validators.required] // Optionnel, pour dire "Bonjour X"
+    });
   }
 
-  // Fonction pour vérifier le code 0000
-  verifyCode() {
-    if (this.accessCode === '0000') {
-      this.isRestoUnlocked = true;
-      this.codeError = false;
-    } else {
-      this.codeError = true;
-      // Petit effet : on vide le champ après erreur
-      setTimeout(() => this.accessCode = '', 500);
+  async onSubmit() {
+    if (this.registerForm.invalid) return;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const { email, password, name } = this.registerForm.value;
+
+    try {
+      // On passe le mot de passe à la fonction register
+      await this.auth.register(email, password);
+
+      // ✅ MESSAGE DE SUCCÈS
+      this.successMessage = "Compte créé avec succès ! Redirection...";
+
+      // On attend 2 secondes pour qu'il lise le message, puis on redirige vers Login
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 2000);
+
+    } catch (err: any) {
+      console.error(err);
+      // Gestion des erreurs classiques
+      if (err.code === 'auth/email-already-in-use') {
+        this.errorMessage = "Cet email est déjà utilisé.";
+      } else if (err.code === 'auth/weak-password') {
+        this.errorMessage = "Le mot de passe doit faire au moins 6 caractères.";
+      } else {
+        this.errorMessage = "Une erreur est survenue. Réessayez.";
+      }
+      this.isLoading = false;
     }
-  }
-
-  onRegisterClient() {
-    console.log('Inscription Client:', this.client);
-    // Ici tu appelles ton service d'auth
-  }
-
-  onRegisterRestaurant() {
-    console.log('Inscription Resto:', this.restaurant);
-    // Ici tu appelles ton service d'auth
   }
 }

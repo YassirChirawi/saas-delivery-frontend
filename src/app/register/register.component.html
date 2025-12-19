@@ -1,152 +1,53 @@
-<div class="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
 
-  <div class="mb-8 text-center animate-fade-in">
-    <h1 class="text-4xl font-extrabold text-gray-900">Bienvenue 👋</h1>
-    <p class="text-gray-500 mt-2">Rejoignez la communauté SaaS Delivery</p>
-  </div>
+  <div class="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 p-8 md:p-10">
 
-  <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-
-    <div class="flex border-b border-gray-100">
-      <button class="flex-1 py-4 text-center font-bold transition-all relative"
-              [class.text-orange-600]="activeTab === 'client'"
-              [class.bg-orange-50]="activeTab === 'client'"
-              [class.text-gray-400]="activeTab !== 'client'"
-              (click)="switchTab('client')">
-        😋 Je suis Gourmand
-        <div *ngIf="activeTab === 'client'" class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-t"></div>
-      </button>
-
-      <button class="flex-1 py-4 text-center font-bold transition-all relative"
-              [class.text-blue-600]="activeTab === 'restaurant'"
-              [class.bg-blue-50]="activeTab === 'restaurant'"
-              [class.text-gray-400]="activeTab !== 'restaurant'"
-              (click)="switchTab('restaurant')">
-        👨‍🍳 Je suis Restaurateur
-        <div *ngIf="activeTab === 'restaurant'" class="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t"></div>
-      </button>
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Créer un compte</h1>
+      <p class="text-gray-500 text-sm">Rejoignez-nous pour commander ! 🍔</p>
     </div>
 
-
-    <div *ngIf="activeTab === 'client'" class="p-8 space-y-4 animate-fade-in">
-
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Prénom</label>
-          <input type="text" [(ngModel)]="client.prenom" placeholder="Thomas"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
-        </div>
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Nom</label>
-          <input type="text" [(ngModel)]="client.nom" placeholder="Dupont"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
-        </div>
-      </div>
-
-      <div>
-        <label class="text-xs font-bold text-gray-500 ml-1">Email</label>
-        <input type="email" [(ngModel)]="client.email" placeholder="thomas@mail.com"
-               class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
-      </div>
-
-      <div>
-        <label class="text-xs font-bold text-gray-500 ml-1">Téléphone</label>
-        <input type="tel" [(ngModel)]="client.phone" placeholder="06 12 34 56 78"
-               class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
-      </div>
-
-      <div class="relative">
-        <label class="text-xs font-bold text-orange-600 ml-1 flex items-center gap-1">
-          📍 Adresse de livraison (Très important)
-        </label>
-        <textarea [(ngModel)]="client.address" rows="2"
-                  class="w-full bg-orange-50 border-2 border-orange-200 rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none text-gray-800 font-medium placeholder-orange-300"
-                  placeholder="12 rue de la Paix, Code porte A24..."></textarea>
-      </div>
-
-      <button (click)="onRegisterClient()"
-              class="w-full bg-orange-600 text-white font-bold py-4 rounded-xl hover:bg-orange-700 transition transform hover:scale-[1.02] shadow-lg mt-4">
-        Créer mon compte
-      </button>
-
-      <p class="text-center text-sm text-gray-400 mt-4">
-        Déjà un compte ? <a routerLink="/login" class="text-orange-600 font-bold hover:underline cursor-pointer">Se connecter</a>
-      </p>
+    <div *ngIf="successMessage" class="mb-6 p-4 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 animate-pulse">
+      {{ successMessage }}
     </div>
 
+    <div *ngIf="errorMessage" class="mb-6 p-4 rounded-xl bg-red-50 text-red-600 font-bold text-center border border-red-200">
+      {{ errorMessage }}
+    </div>
 
-    <div *ngIf="activeTab === 'restaurant'" class="p-8 animate-fade-in">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5" *ngIf="!successMessage">
 
-      <div *ngIf="!isRestoUnlocked" class="text-center space-y-6">
-        <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-4xl mb-4">
-          🔐
-        </div>
-
-        <div>
-          <h3 class="text-xl font-bold text-gray-800">Accès Partenaire</h3>
-          <p class="text-gray-500 text-sm mt-1">
-            Veuillez entrer le code d'invitation reçu par mail pour débloquer le formulaire.
-          </p>
-        </div>
-
-        <div class="relative">
-          <input type="text" [(ngModel)]="accessCode"
-                 class="w-full text-center text-2xl tracking-[0.5em] font-bold bg-gray-100 border-2 border-gray-300 rounded-xl p-4 focus:border-blue-500 focus:bg-white outline-none transition-colors uppercase"
-                 placeholder="0000" maxlength="4">
-
-          <p *ngIf="codeError" class="text-red-500 text-sm font-bold mt-2 animate-bounce">
-            ❌ Code incorrect !
-          </p>
-        </div>
-
-        <button (click)="verifyCode()"
-                class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
-          Valider le code
-        </button>
-
-        <p class="text-xs text-gray-400 mt-6">
-          Pas de code ? <a href="#" class="text-blue-600 underline">Contactez le support</a>
-        </p>
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Votre Prénom</label>
+        <input formControlName="name" type="text" placeholder="Ex: Thomas"
+               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
       </div>
 
-
-      <div *ngIf="isRestoUnlocked" class="space-y-4 animate-fade-in">
-
-        <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg text-sm font-bold text-center border border-green-200 mb-4">
-          ✅ Code validé ! Bienvenue Partenaire.
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Nom du Restaurant</label>
-          <input type="text" [(ngModel)]="restaurant.name"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Numéro SIRET</label>
-          <input type="text" [(ngModel)]="restaurant.siret"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Email Pro</label>
-          <input type="email" [(ngModel)]="restaurant.email"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-gray-500 ml-1">Mot de passe</label>
-          <input type="password" [(ngModel)]="restaurant.password"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-
-        <button (click)="onRegisterRestaurant()"
-                class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition transform hover:scale-[1.02] shadow-lg mt-4">
-          Finaliser mon inscription
-        </button>
-
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Email</label>
+        <input formControlName="email" type="email" placeholder="thomas@mail.com"
+               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
       </div>
 
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Mot de passe</label>
+        <input formControlName="password" type="password" placeholder="••••••••"
+               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
+        <p class="text-xs text-gray-400 ml-1">Minimum 6 caractères</p>
+      </div>
+
+      <button type="submit"
+              [disabled]="registerForm.invalid || isLoading"
+              class="w-full bg-gray-900 text-white font-extrabold py-4 rounded-2xl hover:bg-black transition-transform transform hover:scale-[1.02] shadow-lg disabled:opacity-50 disabled:scale-100 mt-4">
+        <span *ngIf="!isLoading">S'inscrire</span>
+        <span *ngIf="isLoading">Création en cours...</span>
+      </button>
+
+    </form>
+
+    <div class="mt-8 text-center text-sm font-medium text-gray-500">
+      Déjà un compte ?
+      <a routerLink="/login" class="text-gray-900 font-bold hover:underline cursor-pointer">Se connecter</a>
     </div>
 
   </div>
