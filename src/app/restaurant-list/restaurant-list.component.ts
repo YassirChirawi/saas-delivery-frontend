@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../services/api.service';
 import { forkJoin } from 'rxjs';
+import { Router } from '@angular/router'; // 👈 Importe Router
 
 @Component({
   selector: 'app-restaurants-list',
@@ -19,7 +20,8 @@ export class RestaurantsListComponent implements OnInit {
   searchTerm: string = '';
   isLoading: boolean = true;
 
-  constructor(private api: ApiService) { }
+  constructor(private api: ApiService,
+              private router: Router) { }
 
   ngOnInit(): void {
     this.loadData();
@@ -135,5 +137,10 @@ export class RestaurantsListComponent implements OnInit {
     else {
       return currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
     }
+  }
+  testClick(id: string) {
+    console.log('CLICK DÉTECTÉ ! ID:', id);
+    // Si tu vois le log, force la navigation manuellement :
+    this.router.navigate(['/shop', id]);
   }
 }

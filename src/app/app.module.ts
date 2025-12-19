@@ -18,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { RegisterComponent } from './register/register.component';
 import { JoinUsComponent } from './join-us/join-us.component';
 import { HeaderComponent } from './header/header.component';
+import {RouterModule} from "@angular/router";
 
 @NgModule({
   declarations: [
@@ -38,7 +39,8 @@ import { HeaderComponent } from './header/header.component';
     HttpClientModule,
     AppRoutingModule,
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    RouterModule
   ],
   providers: [],
   bootstrap: [AppComponent]
