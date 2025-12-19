@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
-import { CartService } from '../services/cart.service';
-import { AuthService } from '../services/auth.service'; // ✅ Nouveau
+import { CartService, CartItem } from '../services/cart.service';
+import { AuthService } from '../services/auth.service'; // Assure-toi d'avoir ce service
 import { Product } from '../models/product.model';
-import { Restaurant } from '../models/restaurant.model';
 
 @Component({
   selector: 'app-shop',
@@ -13,92 +12,82 @@ import { Restaurant } from '../models/restaurant.model';
 })
 export class ShopComponent implements OnInit {
 
-  // --- DONNÉES RESTO & PRODUITS ---
-  currentRestaurantId: string | null = null;
-  currentRestaurant: Restaurant | null = null;
-
-  allProducts: Product[] = [];      // Source de vérité
-  displayedProducts: Product[] = []; // Liste filtrée affichée
-  uniqueCategories: string[] = [];  // Liste des catégories (ex: Burger, Boisson)
-
-  // --- PANIER & UX ---
-  cartCount = 0;
-  cartTotal = 0;
-  deliveryOption: 'pickup' | 'delivery' = 'pickup';
-  selectedZoneName: string = '';
-
-  // --- FILTRES & RECHERCHE ---
-  searchTerm: string = '';
+  // Données Restaurant & Produits
+  currentRestaurant: any;
+  allProducts: any[] = [];
+  displayedProducts: any[] = [];
+  uniqueCategories: string[] = [];
   selectedCategory: string = 'Tout';
-  isFavorite: boolean = false;
+  searchTerm: string = '';
+  isFavorite: boolean = false; // Juste visuel pour l'instant
 
-  // --- CHECKOUT & UTILISATEUR ---
-  currentUser: any = null;
+  // Données Panier (Celles qui manquaient !)
+  cartItems: CartItem[] = [];
+  cartCount: number = 0;
+  cartTotal: number = 0;
+
+  // Modale & Commande
   showCheckoutModal: boolean = false;
-
-  // Champs du formulaire Checkout
+  deliveryOption: 'pickup' | 'delivery' = 'pickup';
   orderNote: string = '';
+
+  // Utilisateur / Invité
+  currentUser: any = null;
   guestName: string = '';
   guestPhone: string = '';
 
   constructor(
-    private apiService: ApiService,
-    private cartService: CartService,
-    private authService: AuthService, // ✅ Injection Auth
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private api: ApiService,
+    private cartService: CartService,
+    public auth: AuthService
   ) {}
 
-  ngOnInit() {
-    // 1. Récupérer l'utilisateur connecté (si il y en a un)
-    this.authService.user$.subscribe(user => this.currentUser = user);
+  ngOnInit(): void {
+    // 1. Récupérer l'ID du resto depuis l'URL
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.loadRestaurantData(id);
+    }
 
-    // 2. Écouter le Panier
+    // 2. Écouter le Panier (Mise à jour temps réel)
     this.cartService.cart$.subscribe(items => {
-      this.cartCount = items.length;
+      this.cartItems = items;
+      this.cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
       this.cartTotal = this.cartService.getTotalPrice();
     });
 
-    // 3. Charger les données du Resto
-    this.currentRestaurantId = this.route.snapshot.paramMap.get('id');
-    if (this.currentRestaurantId) {
-      this.loadRestaurantData(this.currentRestaurantId);
-      this.checkIfFavorite();
-    }
+    // 3. Vérifier si utilisateur connecté
+    this.auth.user$.subscribe(user => {
+      this.currentUser = user;
+    });
   }
 
   loadRestaurantData(id: string) {
-    // A. Infos Restaurant
-    this.apiService.getRestaurantById(id).subscribe({
-      next: (data) => {
-        this.currentRestaurant = data;
-        this.addToHistory(data); // ✅ Historique auto
-      },
-      error: (err) => console.error("Erreur chargement resto", err)
+    this.api.getRestaurantById(id).subscribe(data => {
+      this.currentRestaurant = data;
     });
 
-    // B. Produits
-    this.apiService.getProductsByRestaurant(id).subscribe({
-      next: (data) => {
-        this.allProducts = data;
-        this.displayedProducts = data;
-        // Extraction des catégories uniques
-        this.uniqueCategories = [...new Set(data.map(p => p.category))].filter(Boolean);
-      },
-      error: (err) => console.error(err)
+    this.api.getProductsByRestaurant(id).subscribe(data => {
+      this.allProducts = data;
+      this.displayedProducts = data;
+      // Extraire les catégories uniques
+      this.uniqueCategories = [...new Set(data.map(p => p.category))].sort();
     });
   }
 
-  // --- FILTRES (Recherche + Catégorie) ---
+  // --- FILTRES ---
+
   applyFilters() {
     let temp = this.allProducts;
 
-    // 1. Filtre Catégorie
+    // Filtre Catégorie
     if (this.selectedCategory !== 'Tout') {
       temp = temp.filter(p => p.category === this.selectedCategory);
     }
 
-    // 2. Filtre Recherche
+    // Filtre Recherche
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       temp = temp.filter(p => p.name.toLowerCase().includes(term));
@@ -112,37 +101,46 @@ export class ShopComponent implements OnInit {
     this.applyFilters();
   }
 
-  // --- GESTION FAVORIS & HISTORIQUE (LocalStorage) ---
-  toggleFavorite() {
-    let favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    if (this.isFavorite) {
-      favs = favs.filter((id: string) => id !== this.currentRestaurantId);
-    } else {
-      favs.push(this.currentRestaurantId);
-    }
-    localStorage.setItem('favorites', JSON.stringify(favs));
-    this.isFavorite = !this.isFavorite;
+  getEmoji(category: string): string {
+    const lower = category.toLowerCase();
+    if (lower.includes('burger')) return '🍔';
+    if (lower.includes('pizza')) return '🍕';
+    if (lower.includes('sushi') || lower.includes('japon')) return '🍣';
+    if (lower.includes('dessert') || lower.includes('sucré')) return '🍰';
+    if (lower.includes('boisson')) return '🥤';
+    return '🍽️';
   }
 
-  checkIfFavorite() {
-    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    this.isFavorite = favs.includes(this.currentRestaurantId);
-  }
+  // --- ACTIONS PANIER (AJOUT / SUPPRESSION) ---
 
-  addToHistory(resto: Restaurant) {
-    let history = JSON.parse(localStorage.getItem('history') || '[]');
-    history = history.filter((r: any) => r.uid !== resto.id);
-    history.unshift({ uid: resto.id, name: resto.name, imageUrl: resto.imageUrl });
-    localStorage.setItem('history', JSON.stringify(history.slice(0, 5)));
-  }
-
-  // --- PANIER & CHECKOUT ---
   addToCart(product: Product) {
-    this.cartService.addToCart(product);
+    // Sécurité : Associer l'ID du resto au produit si manquant
+    if (!product.restaurantId && this.currentRestaurant) {
+      product.restaurantId = this.currentRestaurant.id;
+    }
+
+    const success = this.cartService.addToCart(product);
+
+    if (!success) {
+      const confirmSwitch = confirm("Votre panier contient des produits d'un autre restaurant. Vider le panier pour commander ici ?");
+      if (confirmSwitch) {
+        this.cartService.clearCart();
+        this.cartService.addToCart(product);
+      }
+    }
   }
+
+  decreaseQuantity(item: CartItem) {
+    this.cartService.updateQuantity(item.id, item.quantity - 1);
+  }
+
+  removeFromCart(id: string) {
+    this.cartService.removeFromCart(id);
+  }
+
+  // --- MODALE & CHECKOUT ---
 
   openCheckout() {
-    if (this.cartCount === 0) return;
     this.showCheckoutModal = true;
   }
 
@@ -150,84 +148,59 @@ export class ShopComponent implements OnInit {
     this.showCheckoutModal = false;
   }
 
+  toggleFavorite() {
+    this.isFavorite = !this.isFavorite;
+    // Ici tu peux appeler ton API pour sauvegarder le favori
+  }
+
   goToRegister() {
     this.closeCheckout();
     this.router.navigate(['/register']);
   }
 
-  // --- VALIDATION FINALE ---
+  // --- VALIDATION COMMANDE (WHATSAPP) ---
+
   confirmOrder(type: 'USER' | 'GUEST') {
+    // Validation basique
     if (type === 'GUEST' && (!this.guestName || !this.guestPhone)) {
-      alert("Merci d'indiquer votre nom et téléphone pour la livraison.");
+      alert("Merci de remplir votre nom et téléphone !");
       return;
     }
 
-    const orderData = {
-      items: this.cartService.getCartItems().map(item => ({
-        productId: item.id,  // ✅ On garde le lien avec ton modèle Product existant
-        name: item.name,      // ✅ Snapshot
-        price: item.price,    // ✅ Snapshot
-        quantity: item.quantity
-      })),
-      restaurantId: this.currentRestaurantId,
-      restaurantName: this.currentRestaurant?.name,
-      totalPrice: this.cartTotal,
-      deliveryType: this.deliveryOption,
-      deliveryZone: this.selectedZoneName,
-      note: this.orderNote, // ✅ Remarque client
-      status: 'PENDING',
-      createdAt: new Date(),
-      // Infos Client
-      customerId: type === 'USER' ? this.currentUser.uid : null,
-      guestInfo: type === 'GUEST' ? { name: this.guestName, phone: this.guestPhone } : null
-    };
+    // Calcul du total final avec livraison
+    const deliveryCost = this.deliveryOption === 'delivery' ? 2 : 0;
+    const finalTotal = this.cartTotal + deliveryCost;
 
-    console.log("Envoi commande...", orderData);
+    // Infos Client
+    const clientName = type === 'USER' ? (this.currentUser.displayName || this.currentUser.email) : this.guestName;
+    const clientPhone = type === 'USER' ? (this.currentUser.phoneNumber || 'Non renseigné') : this.guestPhone;
 
-    // 1. Envoi au Backend (Firestore)
-    this.apiService.createOrder(orderData).subscribe({
-      next: (orderId) => {
-        console.log("Commande créée ID:", orderId);
-        this.cartService.clearCart();
-        this.closeCheckout();
+    // Construction du Message WhatsApp
+    let message = `🛒 *NOUVELLE COMMANDE* (${type === 'USER' ? 'Membre' : 'Invité'})\n`;
+    message += `👤 Nom : ${clientName}\n`;
+    message += `📞 Tel : ${clientPhone}\n\n`;
 
-        // 2. Redirection WhatsApp (Le fallback qui rassure)
-        this.openWhatsApp(orderData, orderId);
-      },
-      error: (err) => {
-        console.error("Erreur création commande", err);
-        alert("Erreur technique. Essai via WhatsApp uniquement.");
-        this.openWhatsApp(orderData, "ERREUR_API");
-      }
+    message += `📋 *Détail de la commande :*\n`;
+    this.cartItems.forEach(item => {
+      message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity}€)\n`;
     });
-  }
 
-  openWhatsApp(order: any, refId: string) {
-    const phone = this.currentRestaurant?.whatsappPhone || "33600000000";
-    let msg = `Nouvelle Commande #${refId.substring(0,5)} 🧾\n`;
+    message += `\n🚚 Mode : ${this.deliveryOption === 'delivery' ? 'Livraison (+2€)' : 'À emporter'}`;
+    if (this.orderNote) message += `\n📝 Note : ${this.orderNote}`;
 
-    if(order.guestInfo) msg += `Client: ${order.guestInfo.name} (${order.guestInfo.phone})\n`;
-    else msg += `Client Connecté\n`;
+    message += `\n\n💰 *TOTAL À PAYER : ${finalTotal} €*`;
+    message += `\n📍 Restaurant : ${this.currentRestaurant.name}`;
 
-    msg += `----------------\n`;
-    order.items.forEach((item: any) => msg += `- ${item.quantity}x ${item.name}\n`);
-    msg += `----------------\n`;
+    // Numéro du resto (Idéalement this.currentRestaurant.phone, sinon un par défaut)
+    const restoPhone = this.currentRestaurant.phoneNumber || "33600000000";
 
-    if (order.note) msg += `📝 Note: ${order.note}\n`;
-    msg += `💰 Total: ${order.totalPrice} €\n`;
-    msg += `🚚 Mode: ${order.deliveryType}`;
+    // Envoi
+    const url = `https://wa.me/${restoPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
 
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-  }
-
-  getEmoji(category: string): string {
-    if (!category) return '🍽️';
-    const c = category.toUpperCase();
-    if (c.includes('BURGER')) return '🍔';
-    if (c.includes('SUSHI')) return '🍣';
-    if (c.includes('PIZZA')) return '🍕';
-    if (c.includes('BOISSON')) return '🥤';
-    if (c.includes('DESSERT')) return '🍰';
-    return '🍽️';
+    // Fin
+    this.cartService.clearCart();
+    this.closeCheckout();
+    this.router.navigate(['/order-tracking']);
   }
 }

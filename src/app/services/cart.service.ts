@@ -2,9 +2,10 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Product } from '../models/product.model';
 
-// On crée une interface étendue pour gérer la quantité
+// 1. On sécurise l'interface : un item du panier a OBLIGATOIREMENT un ID (string)
 export interface CartItem extends Product {
   quantity: number;
+  id: string;
 }
 
 @Injectable({
@@ -12,14 +13,12 @@ export interface CartItem extends Product {
 })
 export class CartService {
 
-  // On stocke des CartItem (avec quantité) et non plus juste des Product
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   cart$ = this.cartItems.asObservable();
 
-  private deliveryFee = 0; // 0€ par défaut (Pick-up)
+  private deliveryFee = 0;
 
   constructor() {
-    // AU DÉMARRAGE : On récupère le panier sauvegardé dans le téléphone/navigateur
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       this.cartItems.next(JSON.parse(savedCart));
@@ -28,64 +27,75 @@ export class CartService {
 
   /**
    * Ajoute un produit au panier.
-   * @returns true si ajouté, false si conflit de restaurant (Bloqué)
    */
   addToCart(product: Product): boolean {
     const currentItems = this.cartItems.value;
 
-    // 1. VÉRIFICATION : RESTRICTION 1 SEUL RESTAURANT
+    // A. Restriction 1 seul restaurant
     if (currentItems.length > 0) {
       const currentRestoId = currentItems[0].restaurantId;
-      // Si le produit vient d'un autre resto, on bloque
       if (product.restaurantId !== currentRestoId) {
         return false;
       }
     }
 
-    // 2. GESTION DE LA QUANTITÉ
-    const existingItem = currentItems.find(item => item.id === product.id);
+    // B. Gestion Quantité
+    // On utilise "|| ''" pour éviter l'erreur si product.id est undefined
+    const safeId = product.id || '';
+    const existingItem = currentItems.find(item => item.id === safeId);
 
     if (existingItem) {
-      // Si le produit existe déjà, on augmente la quantité
       existingItem.quantity += 1;
-      // On force la mise à jour du tableau pour que Angular détecte le changement
       this.updateCart([...currentItems]);
     } else {
-      // Sinon, on l'ajoute avec quantité 1
-      const newItem: CartItem = { ...product, quantity: 1 };
+      // C. Création propre du CartItem sans erreur de type
+      const newItem: CartItem = {
+        ...product,
+        id: safeId, // On force l'ID à être une string
+        quantity: 1
+      };
       this.updateCart([...currentItems, newItem]);
     }
 
-    return true; // Succès
+    return true;
   }
 
-  // NOUVEAU : Supprimer un article (Poubelle)
+  /**
+   * Supprime un article via son ID
+   */
   removeFromCart(productId: string) {
     const currentItems = this.cartItems.value;
     const filteredItems = currentItems.filter(item => item.id !== productId);
     this.updateCart(filteredItems);
   }
 
-  // NOUVEAU : Modifier la quantité (+ ou -)
-  updateQuantity(productId: string, quantity: number) {
+  /**
+   * Met à jour la quantité.
+   * Accepte "undefined" pour ne pas faire planter l'HTML, mais le gère proprement.
+   */
+  updateQuantity(productId: string | undefined, quantity: number) {
+    // Sécurité : Si pas d'ID, on ne fait rien
+    if (!productId) return;
+
     let currentItems = this.cartItems.value;
     const item = currentItems.find(i => i.id === productId);
 
     if (item) {
       item.quantity = quantity;
+
+      // Si on arrive à 0, on supprime l'article
       if (item.quantity <= 0) {
-        this.removeFromCart(productId); // Si 0, on supprime
+        this.removeFromCart(productId);
         return;
       }
     }
     this.updateCart([...currentItems]);
   }
 
-  // --- GESTION DES FRAIS & TOTAL ---
+  // --- FRAIS & TOTAL ---
 
   setDeliveryFee(fee: number) {
     this.deliveryFee = fee;
-    // On réémet le panier pour forcer le recalcul du total dans les composants
     this.cartItems.next(this.cartItems.value);
   }
 
@@ -94,7 +104,6 @@ export class CartService {
   }
 
   getTotalPrice(): number {
-    // Calcul : (Prix x Quantité) de chaque item + Livraison
     const productsTotal = this.cartItems.value.reduce((total, item) => {
       return total + (item.price * item.quantity);
     }, 0);
@@ -110,10 +119,9 @@ export class CartService {
 
   clearCart() {
     this.deliveryFee = 0;
-    this.updateCart([]); // Vide le tableau et le localStorage
+    this.updateCart([]);
   }
 
-  // Méthode privée pour mettre à jour le Subject ET le LocalStorage en même temps
   private updateCart(items: CartItem[]) {
     this.cartItems.next(items);
     localStorage.setItem('cart', JSON.stringify(items));
