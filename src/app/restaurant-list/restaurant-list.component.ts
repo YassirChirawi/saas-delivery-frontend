@@ -1,58 +1,105 @@
-import { Component, OnInit } from '@angular/core'; // 👈 1. Vérifie que cet import est là
-import { RestaurantService } from '../services/restaurant.service';
-import { Restaurant } from '../models/restaurant.model';
+import { Component, OnInit } from '@angular/core';
+import { ApiService } from '../services/api.service';
+import { forkJoin } from 'rxjs';
 
-// 👇 2. C'EST CE BLOC QUI MANQUE OU QUI EST MAL ÉCRIT
 @Component({
   selector: 'app-restaurants-list',
-  templateUrl: './restaurant-list.component.html'
+  templateUrl: './restaurant-list.component.html',
+
 })
 export class RestaurantsListComponent implements OnInit {
 
-  // Catégories
-  categories = [
-    { name: 'Tout', emoji: '🍽️' },
-    { name: 'Burger', emoji: '🍔' },
-    { name: 'Pizza', emoji: '🍕' },
-    { name: 'Sushi', emoji: '🍣' },
-    { name: 'Tacos', emoji: '🌮' },
-    { name: 'Asiatique', emoji: '🍜' }
-  ];
+  allRestaurants: any[] = [];
+  filteredRestaurants: any[] = [];
 
-  selectedCategory: string = 'Tout';
-  allRestaurants: Restaurant[] = [];
-  displayedRestaurants: Restaurant[] = [];
+  // 👇 NOUVEAU : Pour les filtres visuels
+  categories: string[] = [];       // La liste de toutes les catégories (Sushi, Burger...)
+  selectedCategory: string = '';   // La catégorie active (vide = tout afficher)
+
+  searchTerm: string = '';
   isLoading: boolean = true;
 
-  constructor(private restaurantService: RestaurantService) {}
+  constructor(private api: ApiService) { }
 
-  ngOnInit() {
-    this.restaurantService.getRestaurants().subscribe({
-      next: (data: Restaurant[]) => {
-        // Filtre pour ne garder que les actifs
-        const activeRestos = data.filter(r => r.active === true);
+  ngOnInit(): void {
+    this.loadData();
+  }
 
-        this.allRestaurants = activeRestos;
-        this.displayedRestaurants = activeRestos;
+  loadData() {
+    this.isLoading = true;
+
+    forkJoin({
+      restos: this.api.getRestaurants(),
+      products: this.api.getProducts()
+    }).subscribe({
+      next: (result) => {
+        const { restos, products } = result;
+
+        // 1. EXTRAIRE LES CATÉGORIES UNIQUES (Pour les boutons)
+        // On récupère toutes les catégories non vides
+        const allCats = products
+          .map(p => p.category)
+          .filter(c => c && c.trim() !== ''); // On enlève les vides
+
+        // On utilise Set pour enlever les doublons (ex: 50 fois 'Burger')
+        this.categories = [...new Set(allCats)].sort();
+
+
+        // 2. ENRICHIR LES RESTAURANTS (Pour savoir qui vend quoi)
+        this.allRestaurants = restos.map(resto => {
+          const sesProduits = products.filter(p => p.restaurantId === resto.id);
+          // On normalise en minuscule pour la comparaison
+          const tags = [...new Set(sesProduits.map(p => p.category ? p.category.toLowerCase() : ''))];
+
+          return { ...resto, tags };
+        });
+
+        this.filteredRestaurants = this.allRestaurants;
         this.isLoading = false;
       },
       error: (err) => {
-        console.error("Erreur chargement restos :", err);
+        console.error('Erreur', err);
         this.isLoading = false;
       }
     });
   }
 
-  filterRestaurants(categoryName: string) {
-    this.selectedCategory = categoryName;
-
-    if (categoryName === 'Tout') {
-      this.displayedRestaurants = this.allRestaurants;
+  // 👇 ACTION : QUAND ON CLIQUE SUR UNE CATÉGORIE
+  selectCategory(cat: string) {
+    // Si on clique sur la catégorie déjà active, on la désactive (Toggle)
+    if (this.selectedCategory === cat) {
+      this.selectedCategory = '';
     } else {
-      this.displayedRestaurants = this.allRestaurants.filter(resto => {
-        // Vérification sécurisée (tags && ...)
-        return resto.tags && resto.tags.some(tag => tag.includes(categoryName));
-      });
+      this.selectedCategory = cat;
     }
+
+    this.applyFilters();
+  }
+
+  // 👇 ACTION : QUAND ON TAPE DANS LA BARRE DE RECHERCHE
+  onSearchChange() {
+    this.applyFilters();
+  }
+
+  // LOGIQUE CENTRALE DE FILTRAGE (Combine Recherche Texte + Catégorie)
+  applyFilters() {
+    let tempRestos = this.allRestaurants;
+
+    // 1. Filtre par Catégorie (Boutons)
+    if (this.selectedCategory) {
+      const catFilter = this.selectedCategory.toLowerCase();
+      tempRestos = tempRestos.filter(r => r.tags.includes(catFilter));
+    }
+
+    // 2. Filtre par Texte (Barre de recherche)
+    if (this.searchTerm) {
+      const textFilter = this.searchTerm.toLowerCase().trim();
+      tempRestos = tempRestos.filter(r =>
+        r.name.toLowerCase().includes(textFilter) ||
+        r.tags.some((t: string) => t.includes(textFilter))
+      );
+    }
+
+    this.filteredRestaurants = tempRestos;
   }
 }

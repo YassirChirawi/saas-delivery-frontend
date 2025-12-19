@@ -1,78 +1,75 @@
-<div class="min-h-screen bg-gray-50 font-sans py-8 px-4 md:px-8 pb-24">
+<div class="container mx-auto px-4 py-6">
 
-  <div class="max-w-7xl mx-auto mb-8">
-    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
-      Nos Restaurants Partenaires 🛵
-    </h1>
-    <p class="text-gray-500 text-lg font-medium">
-      Explorez les meilleures tables et commandez vos plats préférés.
-    </p>
+  <div class="mb-6">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="onSearchChange()"
+      placeholder="Chercher un plat ou un resto..."
+      class="w-full p-4 rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-orange-500 outline-none"
+    >
   </div>
 
-  <div class="max-w-7xl mx-auto mb-10">
-    <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+  <div class="flex gap-3 overflow-x-auto pb-4 mb-6 scrollbar-hide">
 
-      <button *ngFor="let cat of categories"
-              (click)="filterRestaurants(cat.name)"
-              class="flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all transform hover:scale-105 shadow-sm whitespace-nowrap border text-sm md:text-base cursor-pointer"
-              [ngClass]="selectedCategory === cat.name ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'">
-        <span class="text-xl">{{ cat.emoji }}</span>
-        <span>{{ cat.name }}</span>
-      </button>
+    <button
+      (click)="selectCategory('')"
+      [class.bg-gray-900]="selectedCategory === ''"
+      [class.text-white]="selectedCategory === ''"
+      [class.bg-gray-100]="selectedCategory !== ''"
+      [class.text-gray-600]="selectedCategory !== ''"
+      class="px-5 py-2 rounded-full font-bold whitespace-nowrap transition-colors duration-200">
+      Tout
+    </button>
 
-    </div>
+    <button *ngFor="let cat of categories"
+            (click)="selectCategory(cat)"
+            [class.bg-orange-500]="selectedCategory === cat"
+            [class.text-white]="selectedCategory === cat"
+            [class.bg-white]="selectedCategory !== cat"
+            [class.text-gray-700]="selectedCategory !== cat"
+            [class.border-orange-200]="selectedCategory !== cat"
+            class="px-5 py-2 rounded-full font-bold whitespace-nowrap border hover:bg-orange-50 transition-colors duration-200 shadow-sm">
+      {{ cat }}
+    </button>
   </div>
 
-  <div class="max-w-7xl mx-auto">
 
-    <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div *ngFor="let i of [1,2,3,4,5,6]" class="bg-white rounded-3xl shadow-sm border border-gray-100 h-80 animate-pulse">
-        <div class="bg-gray-200 h-48 w-full rounded-t-3xl"></div>
-        <div class="p-6 space-y-4">
-          <div class="h-6 bg-gray-200 rounded w-3/4"></div>
-          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div *ngFor="let resto of filteredRestaurants" class="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
+
+      <div class="h-48 bg-gray-200 relative">
+        <img [src]="resto.imageUrl || 'assets/default-resto.jpg'" class="w-full h-full object-cover">
+
+        <div *ngIf="!resto.isActive" class="absolute inset-0 bg-black/50 flex items-center justify-center">
+          <span class="text-white font-bold text-lg bg-red-600 px-4 py-1 rounded-full">Fermé</span>
         </div>
       </div>
-    </div>
 
-    <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="p-5">
+        <h3 class="text-xl font-bold text-gray-900">{{ resto.name }}</h3>
+        <p class="text-gray-500 text-sm mb-3">{{ resto.address }}</p>
 
-      <div *ngFor="let resto of displayedRestaurants"
-           [routerLink]="['/restaurant', resto.id]"
-           class="group bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-100 transition-all duration-300 cursor-pointer transform hover:-translate-y-2 flex flex-col h-full overflow-hidden">
-
-        <div class="h-48 relative overflow-hidden bg-gray-100">
-          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-               [style.backgroundImage]="'url(' + (resto.imageUrl || 'assets/placeholder.jpg') + ')'">
-          </div>
-          <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-sm text-sm font-bold">
-            ⭐ {{ resto.rating || 'N/A' }}
-          </div>
-        </div>
-
-        <div class="p-5 flex flex-col flex-grow justify-between">
-          <div>
-            <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition">{{ resto.name }}</h2>
-            <div class="flex flex-wrap gap-2 mb-4">
-              <span *ngFor="let tag of resto.tags?.slice(0, 3)"
-                    class="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
-                {{ tag }}
-              </span>
-            </div>
-          </div>
-          <div class="border-t border-gray-50 pt-4 flex justify-between items-center text-sm text-gray-500 font-medium">
-            <span>📍 Voir la carte</span>
-            <span class="text-xl">➝</span>
-          </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span *ngFor="let tag of resto.tags.slice(0, 3)" class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+            {{ tag | titlecase }}
+          </span>
         </div>
       </div>
 
     </div>
 
-    <div *ngIf="!isLoading && displayedRestaurants.length === 0" class="text-center py-20">
-      <div class="text-6xl mb-4">😢</div>
-      <p class="text-gray-500">Aucun restaurant trouvé pour "{{ selectedCategory }}".</p>
-    </div>
-
   </div>
+
+  <div *ngIf="filteredRestaurants.length === 0 && !isLoading" class="text-center py-10">
+    <div class="text-5xl mb-4">🍽️</div>
+    <p class="text-gray-500">Aucun restaurant ne propose cette catégorie.</p>
+    <button (click)="selectCategory('')" class="mt-4 text-orange-500 font-bold underline">Voir tout</button>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-20">
+    Chargement des délices...
+  </div>
+
 </div>
