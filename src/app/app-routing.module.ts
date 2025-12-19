@@ -13,6 +13,7 @@ import {JoinUsComponent} from "./join-us/join-us.component";
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'restaurants', component: RestaurantsListComponent },
+  { path: 'restaurant/:id', component: ShopComponent },
   { path: 'shop/:id', component: ShopComponent },          // Page Client
   {
     path: 'admin',
