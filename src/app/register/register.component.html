@@ -1,54 +1,131 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+<div class="min-h-screen flex flex-col md:flex-row font-sans">
 
-  <div class="max-w-md w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 p-8 md:p-10">
+  <div class="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-8 md:p-12 relative">
 
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Créer un compte</h1>
-      <p class="text-gray-500 text-sm">Rejoignez-nous pour commander ! 🍔</p>
-    </div>
-
-    <div *ngIf="successMessage" class="mb-6 p-4 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 animate-pulse">
-      {{ successMessage }}
-    </div>
-
-    <div *ngIf="errorMessage" class="mb-6 p-4 rounded-xl bg-red-50 text-red-600 font-bold text-center border border-red-200">
-      {{ errorMessage }}
-    </div>
-
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5" *ngIf="!successMessage">
-
-      <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Votre Prénom</label>
-        <input formControlName="name" type="text" placeholder="Ex: Thomas"
-               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
+    <div class="max-w-md w-full">
+      <div class="mb-8">
+        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Espace Client</span>
+        <h1 class="text-3xl font-extrabold text-gray-900 mt-4 mb-2">Créer un compte</h1>
+        <p class="text-gray-500">Rejoignez-nous pour commander ! 🍔</p>
       </div>
 
-      <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Email</label>
-        <input formControlName="email" type="email" placeholder="thomas@mail.com"
-               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
+      <div *ngIf="successMessage" class="mb-6 p-4 rounded-xl bg-green-50 text-green-700 font-bold text-center border border-green-200 animate-pulse">
+        {{ successMessage }}
+      </div>
+      <div *ngIf="errorMessage" class="mb-6 p-4 rounded-xl bg-red-50 text-red-600 font-bold text-center border border-red-200">
+        {{ errorMessage }}
       </div>
 
-      <div class="space-y-1">
-        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Mot de passe</label>
-        <input formControlName="password" type="password" placeholder="••••••••"
-               class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none transition-all">
-        <p class="text-xs text-gray-400 ml-1">Minimum 6 caractères</p>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-5" *ngIf="!successMessage">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Votre Prénom</label>
+          <input formControlName="name" type="text" placeholder="Ex: Thomas"
+                 class="w-full bg-white border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Email</label>
+          <input formControlName="email" type="email" placeholder="thomas@mail.com"
+                 class="w-full bg-white border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1">Mot de passe</label>
+          <input formControlName="password" type="password" placeholder="••••••••"
+                 class="w-full bg-white border border-gray-200 rounded-2xl p-4 font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        </div>
+
+        <button type="submit"
+                [disabled]="registerForm.invalid || isLoading"
+                class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-2xl hover:bg-blue-700 transition-transform transform hover:scale-[1.02] shadow-lg disabled:opacity-50 mt-4">
+          <span *ngIf="!isLoading">M'inscrire comme Client</span>
+          <span *ngIf="isLoading">Création...</span>
+        </button>
+      </form>
+
+      <div class="mt-8 text-center text-sm font-medium text-gray-500">
+        Déjà client ? <a routerLink="/login" class="text-blue-600 font-bold hover:underline cursor-pointer">Se connecter</a>
       </div>
-
-      <button type="submit"
-              [disabled]="registerForm.invalid || isLoading"
-              class="w-full bg-gray-900 text-white font-extrabold py-4 rounded-2xl hover:bg-black transition-transform transform hover:scale-[1.02] shadow-lg disabled:opacity-50 disabled:scale-100 mt-4">
-        <span *ngIf="!isLoading">S'inscrire</span>
-        <span *ngIf="isLoading">Création en cours...</span>
-      </button>
-
-    </form>
-
-    <div class="mt-8 text-center text-sm font-medium text-gray-500">
-      Déjà un compte ?
-      <a routerLink="/login" class="text-gray-900 font-bold hover:underline cursor-pointer">Se connecter</a>
     </div>
-
   </div>
+
+
+  <div class="w-full md:w-1/2 bg-gray-900 text-white flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
+
+    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-gray-800 rounded-full opacity-50 blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-64 h-64 bg-gray-800 rounded-full opacity-50 blur-3xl"></div>
+
+    <div class="max-w-md w-full relative z-10">
+
+      <div class="mb-8">
+        <span class="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full uppercase border border-orange-500/30">Espace Pro</span>
+        <h2 class="text-3xl font-extrabold mt-4">Restaurateurs 👨‍🍳</h2>
+      </div>
+
+      <div *ngIf="restoStep === 'CHECK_EMAIL'">
+        <p class="text-gray-400 mb-6">Connectez-vous ou finalisez votre adhésion avec votre email professionnel.</p>
+
+        <form [formGroup]="restoForm" (ngSubmit)="onCheckRestoEmail()" class="space-y-4">
+          <input formControlName="email" type="email" placeholder="Email du restaurant"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-2xl p-4 font-bold focus:ring-2 focus:ring-orange-500 outline-none">
+
+          <button type="submit" [disabled]="restoLoading || restoForm.invalid"
+                  class="w-full bg-orange-500 text-white font-extrabold py-4 rounded-2xl hover:bg-orange-600 transition-transform transform hover:scale-[1.02] disabled:opacity-50">
+            {{ restoLoading ? 'Vérification...' : 'Continuer' }}
+          </button>
+        </form>
+      </div>
+
+      <div *ngIf="restoStep === 'LOGIN'" class="animate-fade-in-up">
+        <p class="text-lg font-bold text-white mb-1">Ravi de vous revoir !</p>
+        <p class="text-gray-400 text-sm mb-6">Compte : <span class="text-orange-400">{{ restoForm.value.email }}</span></p>
+
+        <form [formGroup]="restoAuthForm" (ngSubmit)="onRestoLogin()" class="space-y-4">
+          <input formControlName="password" type="password" placeholder="Votre mot de passe"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-2xl p-4 font-bold focus:ring-2 focus:ring-orange-500 outline-none">
+
+          <button type="submit" class="w-full bg-white text-gray-900 font-extrabold py-4 rounded-2xl hover:bg-gray-100 transition-transform">
+            Se connecter
+          </button>
+        </form>
+        <button (click)="resetResto()" class="mt-4 text-sm text-gray-500 hover:text-white underline">Ce n'est pas votre email ?</button>
+      </div>
+
+      <div *ngIf="restoStep === 'REGISTER'" class="animate-fade-in-up">
+        <div class="bg-green-500/10 border border-green-500/50 p-4 rounded-xl mb-6">
+          <p class="text-green-400 font-bold text-center">🎉 Candidature acceptée !</p>
+        </div>
+        <p class="text-gray-400 mb-4">Définissez votre mot de passe pour le compte <span class="text-white font-bold">{{ restoForm.value.email }}</span>.</p>
+
+        <form [formGroup]="restoAuthForm" (ngSubmit)="onRestoRegister()" class="space-y-4">
+          <input formControlName="password" type="password" placeholder="Créer mot de passe"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-2xl p-4 font-bold focus:ring-2 focus:ring-green-500 outline-none">
+
+          <input formControlName="confirmPassword" type="password" placeholder="Confirmer mot de passe"
+                 class="w-full bg-gray-800 border border-gray-700 text-white rounded-2xl p-4 font-bold focus:ring-2 focus:ring-green-500 outline-none">
+
+          <button type="submit" class="w-full bg-green-500 text-white font-extrabold py-4 rounded-2xl hover:bg-green-600 transition-transform">
+            Activer mon compte
+          </button>
+        </form>
+      </div>
+
+      <div *ngIf="restoStep === 'LEAD'" class="text-center animate-fade-in-up">
+        <div class="mb-4 text-4xl">🧐</div>
+        <h3 class="text-xl font-bold mb-2">Compte introuvable</h3>
+        <p class="text-gray-400 text-sm mb-6">L'adresse <span class="text-orange-400">{{ restoForm.value.email }}</span> n'est pas reconnue.</p>
+
+        <button class="w-full bg-transparent border-2 border-white text-white font-bold py-3 rounded-2xl hover:bg-white hover:text-gray-900 transition-colors mb-3">
+          Devenir partenaire
+        </button>
+        <button (click)="resetResto()" class="text-sm text-gray-500 hover:text-white underline">Réessayer</button>
+      </div>
+
+      <div *ngIf="restoError" class="mt-4 text-red-400 text-sm text-center font-bold">
+        {{ restoError }}
+      </div>
+
+    </div>
+  </div>
+
 </div>
