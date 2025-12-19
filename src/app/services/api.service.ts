@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs'; // 👈 Ajout de 'of'
+import { switchMap, map } from 'rxjs/operators'; // 👈 Ajout des opérateurs RxJS
 import { Product } from '../models/product.model';
 import { Restaurant } from '../models/restaurant.model';
 import { environment } from 'src/environments/environment';
@@ -10,7 +11,6 @@ import { environment } from 'src/environments/environment';
 })
 export class ApiService {
 
-  // 1. URL DE BASE (Attention, elle s'arrête à /api/v1)
   private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
@@ -21,33 +21,68 @@ export class ApiService {
     return this.http.get<Product[]>(`${this.baseUrl}/products`);
   }
 
-  // Correction ici aussi au cas où :
   getProductsByRestaurant(restaurantId: string): Observable<Product[]> {
-    // URL voulue : .../api/v1/products/restaurant/{id}
     return this.http.get<Product[]>(`${this.baseUrl}/products/restaurant/${restaurantId}`);
   }
 
+  /**
+   * MODIFICATION ICI :
+   * On ajoute le produit, PUIS on met à jour les tags du restaurant automatiquement.
+   */
   addProduct(product: Product): Observable<any> {
-    return this.http.post(`${this.baseUrl}/products`, product, { responseType: 'text' });
+    // 1. On lance la requête pour ajouter le produit
+    return this.http.post(`${this.baseUrl}/products`, product, { responseType: 'text' }).pipe(
+
+      // 2. On enchaîne (switchMap) pour gérer les tags du restaurant
+      switchMap((originalResponse) => {
+
+        // Si le produit n'a pas de catégorie ou d'ID de restaurant, on ne fait rien de plus
+        if (!product.category || !product.restaurantId) {
+          return of(originalResponse);
+        }
+
+        // 3. On récupère le restaurant actuel pour voir ses tags
+        return this.getRestaurantById(product.restaurantId).pipe(
+          switchMap((restaurant) => {
+
+            // On s'assure que le tableau tags existe
+            const currentTags = restaurant.tags || [];
+            const newCategory = product.category.toLowerCase(); // On met en minuscule
+
+            // 4. Si la catégorie n'est PAS dans les tags, on l'ajoute
+            if (!currentTags.includes(newCategory)) {
+
+              // On crée la nouvelle liste de tags
+              const updatedTags = [...currentTags, newCategory];
+
+              // On crée un objet restaurant mis à jour (on garde tout, on change juste les tags)
+              const updatedRestaurant = { ...restaurant, tags: updatedTags };
+
+              // 5. On envoie la mise à jour au serveur
+              return this.updateRestaurant(product.restaurantId, updatedRestaurant).pipe(
+                // À la fin, on renvoie la réponse originale de la création du produit
+                map(() => originalResponse)
+              );
+            }
+
+            // Si le tag existait déjà, on ne fait rien et on renvoie la réponse originale
+            return of(originalResponse);
+          })
+        );
+      })
+    );
   }
 
   // --- RESTAURANTS ---
 
   getRestaurants(): Observable<Restaurant[]> {
-    // URL voulue : .../api/v1/restaurants
     return this.http.get<Restaurant[]>(`${this.baseUrl}/restaurants`);
   }
 
-  // 👇 C'EST ICI QUE TU AVAIS L'ERREUR 👇
   getRestaurantById(id: string): Observable<Restaurant> {
-    // URL voulue : .../api/v1/restaurants/{id}
-    // AVANT (Erreur) : `${this.baseUrl}/restaurants/restaurants/${id}` ou conflit avec baseUrl
-
-    // APRÈS (Correction) :
     return this.http.get<Restaurant>(`${this.baseUrl}/restaurants/${id}`);
   }
 
-  // ... le reste (createRestaurant, toggleRestaurantStatus) reste inchangé
   createRestaurant(restaurant: Restaurant): Observable<any> {
     return this.http.post(`${this.baseUrl}/restaurants`, restaurant, { responseType: 'text' });
   }
@@ -60,51 +95,48 @@ export class ApiService {
     return this.http.get<Restaurant>(`${this.baseUrl}/restaurants/owner/${email}`);
   }
 
-  // Update
+  // Update Product
   updateProduct(id: string, product: Product): Observable<any> {
     return this.http.put(`${this.baseUrl}/products/${id}`, product);
   }
 
-  // Delete
+  // Delete Product
   deleteProduct(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/products/${id}`, { responseType: 'text' });
   }
 
-  // Ajouter une demande de partenariat
+  // --- PARTENARIATS ---
+
   addPartnerRequest(request: any): Observable<any> {
     request.status = 'PENDING';
-
-    // 👇 AJOUTE LE 3ème ARGUMENT ICI : { responseType: 'text' }
     return this.http.post(`${this.baseUrl}/requests`, request, { responseType: 'text' });
   }
 
-  // Récupérer les demandes
   getRequests(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/requests`);
   }
 
-  // Supprimer une demande
   deleteRequest(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/requests/${id}`, { responseType: 'text' });
   }
 
+  // Update Restaurant
   updateRestaurant(id: string, restaurant: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/restaurants/${id}`, restaurant, { responseType: 'text' });
   }
 
-  // Supprimer un restaurant (La méthode qui te manque)
+  // Delete Restaurant
   deleteRestaurant(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/restaurants/${id}`, { responseType: 'text' });
   }
 
+  // --- FAVORIS & COMMANDES ---
+
   addToFavoritesCloud(userId: string, restaurantId: string) {
-    // Appel HTTP vers ton Backend Spring Boot
     return this.http.post(`${this.baseUrl}/users/${userId}/favorites`, { restaurantId });
   }
 
   createOrder(orderData: any): Observable<any> {
-    // Note : On ajoute { responseType: 'text' } car ton Backend renvoie juste un ID (String)
-    // et pas un objet JSON complet. Sinon Angular va essayer de parser et fera une erreur.
     return this.http.post(`${this.baseUrl}/orders`, orderData, { responseType: 'text' });
   }
 }

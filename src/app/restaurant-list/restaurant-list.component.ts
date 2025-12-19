@@ -27,7 +27,7 @@ export class RestaurantsListComponent implements OnInit {
   constructor(private restaurantService: RestaurantService) {}
 
   ngOnInit() {
-    this.restaurantService.getAllRestaurants().subscribe({
+    this.restaurantService.getRestaurants().subscribe({
       next: (data: Restaurant[]) => {
         // Filtre pour ne garder que les actifs
         const activeRestos = data.filter(r => r.active === true);

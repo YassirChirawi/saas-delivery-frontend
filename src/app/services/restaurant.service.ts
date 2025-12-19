@@ -7,94 +7,99 @@ import {
   deleteDoc,
   doc,
   updateDoc,
-  onSnapshot // 👈 C'est lui qui remplace collectionData pour le temps réel
+  onSnapshot,
+  query,        // 👈 Nouveau : Pour préparer la requête
+  where,        // 👈 Nouveau : Pour le filtre (Where tags contains...)
+  getDocs       // 👈 Nouveau : Pour récupérer le résultat de la recherche
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { Restaurant } from '../models/restaurant.model';
+import { Restaurant } from '../models/restaurant.model'; // Vérifie que ce chemin est bon
 import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RestaurantService {
 
-  // 1. Initialisation MANUELLE (Comme ton AuthService)
+  // 1. Initialisation
   private app = initializeApp(environment.firebase);
   private db = getFirestore(this.app);
 
   constructor() {}
 
-  // --- CRUD RESTAURANTS ---
-
-  // 1. Créer un restaurant
+  // ==========================================
+  // 1. CREATE (Créer un restaurant)
+  // ==========================================
   createRestaurant(resto: Restaurant): Observable<any> {
     const restoRef = collection(this.db, 'restaurants');
-    return from(addDoc(restoRef, resto));
+    // On ajoute un tableau de tags vide par défaut si on l'a oublié, pour éviter les bugs
+    const dataToSave = {
+      ...resto,
+      tags: resto.tags || []
+    };
+    return from(addDoc(restoRef, dataToSave));
   }
 
-  // 2. Récupérer tous les restaurants (TEMPS RÉEL)
-  // On recrée manuellement la logique de collectionData
+  // ==========================================
+  // 2. READ (Tout récupérer en TEMPS RÉEL)
+  // ==========================================
   getRestaurants(): Observable<Restaurant[]> {
     const restoRef = collection(this.db, 'restaurants');
 
     return new Observable((observer) => {
-      // onSnapshot écoute la base de données en permanence
+      // onSnapshot écoute la BDD en permanence
       const unsubscribe = onSnapshot(restoRef, (snapshot) => {
         const restaurants = snapshot.docs.map(doc => ({
-          id: doc.id, // On récupère l'ID manuellement
+          id: doc.id,
           ...doc.data() as any
         })) as Restaurant[];
 
-        observer.next(restaurants); // On envoie les données à Angular
+        observer.next(restaurants);
       }, (error) => {
         observer.error(error);
       });
 
-      // Fonction de nettoyage quand le composant est détruit
       return () => unsubscribe();
     });
   }
 
-  // 3. Mettre à jour
+  // ==========================================
+  // 3. FILTER (Recherche serveur - Optionnel)
+  // ==========================================
+  // Utile si tu as trop de restaurants pour filtrer en Javascript
+  filterRestaurantsByTag(tagName: string): Observable<Restaurant[]> {
+    const restoRef = collection(this.db, 'restaurants');
+    const term = tagName.toLowerCase().trim();
+
+    // Requête : Cherche les restos où le tableau 'tags' contient 'term'
+    const q = query(restoRef, where('tags', 'array-contains', term));
+
+    // Note: Pour une recherche, on fait souvent un appel unique (getDocs)
+    // plutôt qu'un temps réel (onSnapshot) pour économiser les quotas.
+    return from(getDocs(q)).pipe(
+      map(snapshot => {
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data() as any
+        })) as Restaurant[];
+      })
+    );
+  }
+
+  // ==========================================
+  // 4. UPDATE (Mettre à jour)
+  // ==========================================
   updateRestaurant(id: string, data: Partial<Restaurant>): Observable<void> {
     const docRef = doc(this.db, 'restaurants', id);
     return from(updateDoc(docRef, data));
   }
 
-  getAllRestaurants(): Observable<Restaurant[]> {
-    // 1. Référence à la collection
-    const restoRef = collection(this.db, 'restaurants');
-
-    // 2. On crée un Observable manuellement
-    return new Observable((observer) => {
-
-      // 3. onSnapshot écoute la BDD en temps réel
-      const unsubscribe = onSnapshot(restoRef,
-        (snapshot) => {
-          // On transforme les documents bruts en objets Restaurant
-          const restaurants = snapshot.docs.map(doc => ({
-            id: doc.id,             // On récupère l'ID du document
-            ...doc.data() as any    // On récupère les données (name, email...)
-          })) as Restaurant[];
-
-          // On envoie la nouvelle liste à Angular
-          observer.next(restaurants);
-        },
-        (error) => {
-          observer.error(error);
-        }
-      );
-
-      // 4. Fonction de nettoyage (arrête d'écouter quand on quitte la page)
-      return () => unsubscribe();
-    });
-  }
-
-  // 4. Supprimer
+  // ==========================================
+  // 5. DELETE (Supprimer)
+  // ==========================================
   deleteRestaurant(id: string): Observable<void> {
     const docRef = doc(this.db, 'restaurants', id);
     return from(deleteDoc(docRef));
   }
-
-
 }
