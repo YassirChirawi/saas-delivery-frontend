@@ -102,4 +102,38 @@ export class RestaurantsListComponent implements OnInit {
 
     this.filteredRestaurants = tempRestos;
   }
+  // Ajoute cette méthode dans ta classe RestaurantsListComponent
+
+  isOpen(resto: any): boolean {
+    // 1. Si le switch manuel "isActive" est à false, c'est fermé d'office
+    if (resto.isActive === false) return false;
+
+    // 2. Si pas d'horaires définis, on considère ouvert par défaut (ou fermé, selon ton choix)
+    if (!resto.openingTime || !resto.closingTime) return true;
+
+    // 3. Récupérer l'heure actuelle
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+
+    // Convertir l'heure actuelle en minutes (ex: 14h30 = 14*60 + 30 = 870 min)
+    const currentTimeInMinutes = currentHour * 60 + currentMin;
+
+    // 4. Convertir les horaires du resto en minutes
+    const [openH, openM] = resto.openingTime.split(':').map(Number);
+    const [closeH, closeM] = resto.closingTime.split(':').map(Number);
+
+    const openTimeInMinutes = openH * 60 + openM;
+    const closeTimeInMinutes = closeH * 60 + closeM;
+
+    // 5. Comparaison
+    // Cas classique : Ouvre à 11h, Ferme à 23h
+    if (closeTimeInMinutes > openTimeInMinutes) {
+      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes;
+    }
+    // Cas de nuit : Ouvre à 18h, Ferme à 02h du matin
+    else {
+      return currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
+    }
+  }
 }

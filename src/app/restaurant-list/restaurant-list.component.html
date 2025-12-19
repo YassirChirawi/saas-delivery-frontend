@@ -42,8 +42,13 @@
       <div class="h-48 bg-gray-200 relative">
         <img [src]="resto.imageUrl || 'assets/default-resto.jpg'" class="w-full h-full object-cover">
 
-        <div *ngIf="!resto.isActive" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <span class="text-white font-bold text-lg bg-red-600 px-4 py-1 rounded-full">Fermé</span>
+        <div *ngIf="!isOpen(resto)" class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm z-10">
+          <span class="text-white font-bold text-lg bg-red-600 px-4 py-1 rounded-full mb-1">Fermé</span>
+          <span *ngIf="resto.openingTime" class="text-white text-xs">Ouvre à {{ resto.openingTime }}</span>
+        </div>
+
+        <div *ngIf="isOpen(resto)" class="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow-md z-10">
+          Ouvert 🟢
         </div>
       </div>
 

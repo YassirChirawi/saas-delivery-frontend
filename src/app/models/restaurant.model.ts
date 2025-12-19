@@ -13,4 +13,6 @@ export interface Restaurant {
   deliveryTime?: string; // "20-30 min"
   deliveryPrice?: number;
   tags?: string[];
+  openingTime?: string; // ex: "11:00"
+  closingTime?: string;
 }
