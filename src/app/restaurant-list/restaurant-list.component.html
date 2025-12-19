@@ -37,7 +37,9 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-    <div *ngFor="let resto of filteredRestaurants" class="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
+    <div *ngFor="let resto of filteredRestaurants"
+         [routerLink]="['/shop', resto.id]"
+         class="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
 
       <div class="h-48 bg-gray-200 relative">
         <img [src]="resto.imageUrl || 'assets/default-resto.jpg'" class="w-full h-full object-cover">
