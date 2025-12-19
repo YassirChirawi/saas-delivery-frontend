@@ -19,7 +19,12 @@ const routes: Routes = [
     path: 'admin',
     component: AdminComponent,
     canActivate: [AuthGuard] // Le vigile surveille l'entrée
-  },       // Page Admin
+  }, // Page Admin
+  {
+    path: 'restaurateur/dashboard',
+    component: AdminComponent,
+    canActivate: [AuthGuard] // Le vigile surveille l'entrée
+  },
   {
     path: 'super-admin',
     component: SuperAdminComponent,
