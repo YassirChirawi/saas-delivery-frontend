@@ -6,14 +6,23 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  fetchSignInMethodsForEmail, // 👈 AJOUT INDISPENSABLE ICI
   User,
   UserCredential
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore'; // 👈 INDISPENSABLE POUR LE PROFIL
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs
+} from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
-import { collection, query, where, getDocs } from 'firebase/firestore'; // 👈 Ajoute ces imports
 
 // Définition des Rôles
 export enum UserRole {
@@ -35,7 +44,7 @@ export interface UserProfile {
 export class AuthService {
   private app = initializeApp(environment.firebase);
   private auth = getAuth(this.app);
-  private db = getFirestore(this.app); // 👈 Initialisation de la BDD
+  private db = getFirestore(this.app);
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   user$ = this.currentUserSubject.asObservable();
@@ -46,7 +55,42 @@ export class AuthService {
     });
   }
 
-  // 1. LOGIN : On renvoie explicitement un UserCredential (le paquet complet)
+  // ============================================================
+  //  NOUVELLE MÉTHODE : CHECK RESTAURATEUR (Pour le Register)
+  // ============================================================
+  async checkRestaurateurStatus(email: string): Promise<'LOGIN' | 'REGISTER' | 'LEAD'> {
+    try {
+      // 1. Vérifier si l'email existe dans la collection "restaurants" (Firestore)
+      const restaurantsRef = collection(this.db, "restaurants");
+      const q = query(restaurantsRef, where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+
+      // Si l'email n'est pas dans la liste des restos -> C'est un inconnu (Lead)
+      if (querySnapshot.empty) {
+        return 'LEAD';
+      }
+
+      // 2. Vérifier si un compte Auth existe déjà pour cet email
+      // Renvoie un tableau (ex: ['password']). Si vide = pas de compte créé.
+      const methods = await fetchSignInMethodsForEmail(this.auth, email);
+
+      if (methods.length > 0) {
+        return 'LOGIN'; // Le resto est validé ET il a déjà créé son compte (Mot de passe existe)
+      } else {
+        return 'REGISTER'; // Le resto est validé MAIS n'a pas encore de compte (Ton cas cible)
+      }
+
+    } catch (error) {
+      console.error("Erreur checkRestaurateurStatus:", error);
+      return 'LEAD'; // Sécurité : en cas d'erreur, on redirige vers le formulaire de contact
+    }
+  }
+
+  // ============================================================
+  //  MÉTHODES EXISTANTES
+  // ============================================================
+
+  // 1. LOGIN
   async login(email: string, pass: string): Promise<UserCredential> {
     return await signInWithEmailAndPassword(this.auth, email, pass);
   }
@@ -57,7 +101,7 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  // 3. RÉCUPÉRER LE PROFIL (C'est la méthode qu'il te manquait !)
+  // 3. RÉCUPÉRER LE PROFIL
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     try {
       const docRef = doc(this.db, "users", uid);
@@ -75,7 +119,7 @@ export class AuthService {
     }
   }
 
-  // 4. INSCRIPTION CLIENT
+  // 4. INSCRIPTION (Utilisé par Client ET Restaurateur)
   async register(email: string, pass: string) {
     // 1. On crée le compte dans Firebase Auth
     const credential = await createUserWithEmailAndPassword(this.auth, email, pass);
@@ -83,8 +127,7 @@ export class AuthService {
     let assignedRole = UserRole.CLIENT; // Par défaut, c'est un client
     let linkedRestaurantId = null;
 
-    // 2. On vérifie si cet email est un "VIP" (Propriétaire de Resto)
-    // Le Super Admin a déjà créé le resto avec cet email
+    // 2. On revérifie si cet email est un "VIP" (Propriétaire de Resto) pour attribuer le rôle
     const restaurantsRef = collection(this.db, "restaurants");
     const q = query(restaurantsRef, where("email", "==", email));
     const querySnapshot = await getDocs(q);
@@ -94,7 +137,7 @@ export class AuthService {
       const restoDoc = querySnapshot.docs[0];
       assignedRole = UserRole.RESTAURANT_ADMIN;
       linkedRestaurantId = restoDoc.id;
-      console.log(`🎉 Compte Restaurateur détecté pour ${restoDoc.data()['name']}`);
+      console.log(`🎉 Compte Restaurateur activé pour ${restoDoc.data()['name']}`);
     }
 
     // 3. On crée le profil dans Firestore avec le bon rôle

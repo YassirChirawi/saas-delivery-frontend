@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-// Les états possibles pour la partie droite
+// Définition des étapes pour la partie droite (Restaurateur)
 type RestoStep = 'CHECK_EMAIL' | 'LOGIN' | 'REGISTER' | 'LEAD';
 
 @Component({
@@ -12,139 +12,162 @@ type RestoStep = 'CHECK_EMAIL' | 'LOGIN' | 'REGISTER' | 'LEAD';
 })
 export class RegisterComponent {
 
-  // --- PARTIE CLIENT (Ton code existant) ---
+  // ==========================================
+  // VARIABLES : PARTIE CLIENT (Gauche)
+  // ==========================================
   registerForm: FormGroup;
-  errorMessage: string = '';
-  successMessage: string = '';
-  isLoading: boolean = false;
+  clientErrorMessage: string = '';
+  clientSuccessMessage: string = '';
+  clientLoading: boolean = false;
 
-  // --- PARTIE RESTAURATEUR (Nouveau) ---
-  restoForm: FormGroup;       // Pour l'étape 1 (Email)
-  restoAuthForm: FormGroup;   // Pour l'étape 2 (Password)
+  // ==========================================
+  // VARIABLES : PARTIE RESTAURATEUR (Droite)
+  // ==========================================
+  restoEmailForm: FormGroup;    // Etape 1 : Juste l'email
+  restoAuthForm: FormGroup;     // Etape 2 : Mot de passe (Login ou Register)
   restoStep: RestoStep = 'CHECK_EMAIL';
   restoLoading: boolean = false;
   restoError: string = '';
 
   constructor(
     private fb: FormBuilder,
-    private auth: AuthService, // Assure-toi que ton AuthService gère aussi les restaurateurs si besoin
+    private auth: AuthService,
     private router: Router
   ) {
-    // 1. Formulaire Client (Ton code)
+    // --- INITIALISATION FORMULAIRE CLIENT ---
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       name: ['', Validators.required]
     });
 
-    // 2. Formulaire Restaurateur - Etape Email
-    this.restoForm = this.fb.group({
+    // --- INITIALISATION FORMULAIRES RESTAURATEUR ---
+    this.restoEmailForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
     });
 
-    // 3. Formulaire Restaurateur - Etape Mot de passe
     this.restoAuthForm = this.fb.group({
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: [''] // Uniquement pour le register
+      confirmPassword: [''] // Utile seulement pour le mode REGISTER
     });
   }
 
   // ==========================================
-  // LOGIQUE CLIENT (Ton code existant)
+  // LOGIQUE CLIENT (Gauche - Code existant)
   // ==========================================
-  async onSubmit() {
+  async onClientSubmit() {
     if (this.registerForm.invalid) return;
 
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.clientLoading = true;
+    this.clientErrorMessage = '';
+    this.clientSuccessMessage = '';
 
     const { email, password, name } = this.registerForm.value;
 
     try {
-      await this.auth.register(email, password); // Supposons que c'est registerClient
-      this.successMessage = "Compte créé avec succès ! Redirection...";
+      // Inscription Client Classique
+      await this.auth.register(email, password); // Assure-toi que cette méthode existe
+
+      this.clientSuccessMessage = "Compte client créé ! Redirection...";
       setTimeout(() => {
-        this.router.navigate(['/client/home']); // Redirection Client
+        this.router.navigate(['/login']); // Ou dashboard client
       }, 2000);
 
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/email-already-in-use') {
-        this.errorMessage = "Cet email est déjà utilisé.";
+        this.clientErrorMessage = "Cet email est déjà utilisé.";
       } else {
-        this.errorMessage = "Une erreur est survenue.";
+        this.clientErrorMessage = "Une erreur est survenue.";
       }
-      this.isLoading = false;
+    } finally {
+      this.clientLoading = false;
     }
   }
 
   // ==========================================
-  // LOGIQUE RESTAURATEUR (Nouvelle logique)
+  // LOGIQUE RESTAURATEUR (Droite - Nouvelle logique)
   // ==========================================
 
-  // Etape 1 : Vérifier l'email
+  // ÉTAPE 1 : VÉRIFICATION DE L'EMAIL
   async onCheckRestoEmail() {
-    if (this.restoForm.invalid) return;
+    if (this.restoEmailForm.invalid) return;
 
     this.restoLoading = true;
     this.restoError = '';
-    const emailToCheck = this.restoForm.value.email;
+    const emailToCheck = this.restoEmailForm.value.email;
 
     try {
-      // --- ICI APPEL BACKEND RÉEL ---
-      // const status = await this.auth.checkRestoStatus(emailToCheck);
+      // APPEL AU SERVICE (Vérifie Firestore 'restaurants' + Firebase Auth)
+      // Cette méthode doit retourner : 'LOGIN', 'REGISTER', ou 'LEAD'
+      const status = await this.auth.checkRestaurateurStatus(emailToCheck);
 
-      // --- MOCK POUR TESTER (A supprimer quand tu as ton backend) ---
-      const status = await this.mockBackendCheck(emailToCheck);
-
-      if (status === 'ACCOUNT_EXISTS') {
+      if (status === 'LOGIN') {
         this.restoStep = 'LOGIN';
-      } else if (status === 'APPLICATION_ACCEPTED') {
+      } else if (status === 'REGISTER') {
         this.restoStep = 'REGISTER';
       } else {
-        this.restoStep = 'LEAD';
+        this.restoStep = 'LEAD'; // Email inconnu dans la liste des restaurants
       }
 
     } catch (error) {
-      this.restoError = "Impossible de vérifier l'email.";
+      console.error(error);
+      this.restoError = "Impossible de vérifier le compte. Réessayez.";
     } finally {
       this.restoLoading = false;
     }
   }
 
-  // Etape 2A : Login Restaurateur
+  // ÉTAPE 2A : LOGIN (Le compte existe déjà)
   async onRestoLogin() {
-    console.log("Login Resto avec :", this.restoForm.value.email, this.restoAuthForm.value.password);
-    // await this.auth.login(email, password)...
+    if (this.restoAuthForm.get('password')?.invalid) return;
+
+    this.restoLoading = true;
+    const email = this.restoEmailForm.value.email;
+    const password = this.restoAuthForm.value.password;
+
+    try {
+      await this.auth.login(email, password);
+      this.router.navigate(['/restaurateur/dashboard']); // Redirection Dashboard Pro
+    } catch (error) {
+      this.restoError = "Mot de passe incorrect.";
+      this.restoLoading = false;
+    }
   }
 
-  // Etape 2B : Création Compte Restaurateur (Suite acceptation)
+  // ÉTAPE 2B : INSCRIPTION (Le dossier est validé, on crée le compte)
   async onRestoRegister() {
+    if (this.restoAuthForm.invalid) return;
+
     const { password, confirmPassword } = this.restoAuthForm.value;
+    const email = this.restoEmailForm.value.email;
+
     if (password !== confirmPassword) {
       this.restoError = "Les mots de passe ne correspondent pas.";
       return;
     }
-    console.log("Création compte Resto validé pour :", this.restoForm.value.email);
-    // await this.auth.completeRegistration(email, password)...
+
+    this.restoLoading = true;
+
+    try {
+      // Création du compte Firebase Auth pour ce restaurateur validé
+      await this.auth.register(email, password);
+
+      // Optionnel : Mettre à jour Firestore pour dire "Compte activé"
+
+      this.router.navigate(['/restaurateur/dashboard']);
+    } catch (error: any) {
+      console.error(error);
+      this.restoError = "Erreur lors de l'activation du compte.";
+      this.restoLoading = false;
+    }
   }
 
-  // Reset pour changer d'email
+  // BOUTON "RETOUR" OU "RESET"
   resetResto() {
     this.restoStep = 'CHECK_EMAIL';
     this.restoAuthForm.reset();
     this.restoError = '';
-  }
-
-  // SIMULATION BACKEND (A virer plus tard)
-  mockBackendCheck(email: string): Promise<string> {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        if (email === 'admin@resto.com') resolve('ACCOUNT_EXISTS');
-        else if (email === 'new@resto.com') resolve('APPLICATION_ACCEPTED');
-        else resolve('UNKNOWN');
-      }, 1000);
-    });
+    this.restoLoading = false;
   }
 }
