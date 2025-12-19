@@ -8,4 +8,9 @@ export interface Restaurant {
   email: string;
   description?: string;
   address?: string;
+  tags: string[];
+  rating: number;
+  ratingCount: number;
+  deliveryTime?: string; // "20-30 min"
+  deliveryPrice?: number;
 }

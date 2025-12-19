@@ -1,34 +1,62 @@
 import { Component } from '@angular/core';
-import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html'
+
 })
 export class RegisterComponent {
-  email = '';
-  password = '';
-  errorMessage = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  // Gestion des onglets
+  activeTab: 'client' | 'restaurant' = 'client';
 
-  async onRegister() {
-    try {
-      this.errorMessage = '';
-      await this.auth.register(this.email, this.password);
+  // Données du client
+  client = {
+    nom: '',
+    prenom: '',
+    email: '',
+    phone: '',
+    address: '' // Champ très important
+  };
 
-      // Une fois inscrit, on redirige vers le login ou l'accueil
-      alert("Compte créé avec succès ! Connectez-vous.");
-      this.router.navigate(['/login']);
+  // Logique du Code Partenaire
+  accessCode: string = '';
+  isRestoUnlocked: boolean = false;
+  codeError: boolean = false;
 
-    } catch (error: any) {
-      console.error(error);
-      if (error.code === 'auth/email-already-in-use') {
-        this.errorMessage = "Cet email est déjà utilisé.";
-      } else {
-        this.errorMessage = "Erreur lors de l'inscription.";
-      }
+  // Données du restaurant (une fois débloqué)
+  restaurant = {
+    name: '',
+    siret: '',
+    email: '',
+    password: ''
+  };
+
+  // Fonction pour changer d'onglet
+  switchTab(tab: 'client' | 'restaurant') {
+    this.activeTab = tab;
+    this.codeError = false; // Reset l'erreur si on change
+  }
+
+  // Fonction pour vérifier le code 0000
+  verifyCode() {
+    if (this.accessCode === '0000') {
+      this.isRestoUnlocked = true;
+      this.codeError = false;
+    } else {
+      this.codeError = true;
+      // Petit effet : on vide le champ après erreur
+      setTimeout(() => this.accessCode = '', 500);
     }
+  }
+
+  onRegisterClient() {
+    console.log('Inscription Client:', this.client);
+    // Ici tu appelles ton service d'auth
+  }
+
+  onRegisterRestaurant() {
+    console.log('Inscription Resto:', this.restaurant);
+    // Ici tu appelles ton service d'auth
   }
 }

@@ -10,7 +10,7 @@ import { ShopComponent } from './shop/shop.component';
 import { AdminComponent } from './admin/admin.component';
 import { SuperAdminComponent } from './super-admin/super-admin.component';
 import { HomeComponent } from './home/home.component';
-import { RestaurantListComponent } from './restaurant-list/restaurant-list.component';
+import { RestaurantsListComponent } from './restaurant-list/restaurant-list.component';
 import { LoginComponent } from './login/login.component';
 
 
@@ -18,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { RegisterComponent } from './register/register.component';
 import { JoinUsComponent } from './join-us/join-us.component';
 import { HeaderComponent } from './header/header.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -25,7 +26,7 @@ import { HeaderComponent } from './header/header.component';
     AdminComponent,
     SuperAdminComponent,
     HomeComponent,
-    RestaurantListComponent,
+    RestaurantsListComponent,
     LoginComponent,
     RegisterComponent,
     JoinUsComponent,
