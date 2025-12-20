@@ -162,6 +162,21 @@ export class ShopComponent implements OnInit {
     this.router.navigate(['/register']);
   }
 
+  formatPhoneForWhatsApp(phone: string): string {
+    if (!phone) return "";
+
+    // 1. On enlève tout ce qui n'est pas un chiffre (espaces, tirets, parenthèses...)
+    let clean = phone.replace(/[^\d]/g, '');
+
+    // 2. Gestion du format français (Si commence par 0, on remplace par 33)
+    if (clean.startsWith('0')) {
+      clean = '33' + clean.substring(1);
+    }
+
+    // 3. Si le numéro commence déjà par 33 (ex: importé depuis un Excel), on laisse tel quel.
+    return clean;
+  }
+
   // --- VALIDATION COMMANDE (WHATSAPP) ---
 
   async confirmOrder(type: 'USER' | 'GUEST') {
@@ -195,15 +210,26 @@ export class ShopComponent implements OnInit {
     };
 
     try {
-      // 3. APPEL AU SERVICE (Le composant délègue le travail)
       const orderId = await this.orderService.createOrder(newOrder);
-
-      // 4. GÉNÉRATION MESSAGE (Via le service)
       const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
 
-      // 5. OUVERTURE WHATSAPP & REDIRECTION
-      const restoPhone = this.currentRestaurant.phoneNumber || "33600000000";
-      const url = `https://wa.me/${restoPhone}?text=${encodeURIComponent(message)}`;
+      // 👇 DÉBUT DE LA CORRECTION 👇
+
+      // 1. On récupère le numéro (On vérifie phoneNumber ET phone au cas où)
+      const rawPhone = this.currentRestaurant.phoneNumber || this.currentRestaurant.phone;
+
+      // 2. Sécurité : Si pas de numéro, on arrête tout
+      if (!rawPhone) {
+        alert("Impossible de commander : Ce restaurant n'a pas renseigné de numéro WhatsApp.");
+        // On annule la redirection vers le suivi car la commande ne peut pas partir
+        return;
+      }
+
+      // 3. On formate le numéro proprement
+      const targetPhone = this.formatPhoneForWhatsApp(rawPhone);
+
+      // 4. On ouvre WhatsApp
+      const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
 
       this.cartService.clearCart();
