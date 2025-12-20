@@ -4,6 +4,7 @@ import { ApiService } from '../services/api.service';
 import { CartService, CartItem } from '../services/cart.service';
 import { AuthService } from '../services/auth.service'; // Assure-toi d'avoir ce service
 import { Product } from '../models/product.model';
+import { OrderService } from '../services/order.service';
 
 @Component({
   selector: 'app-shop',
@@ -42,8 +43,10 @@ export class ShopComponent implements OnInit {
     private router: Router,
     private api: ApiService,
     private cartService: CartService,
-    public auth: AuthService
-  ) {}
+    public auth: AuthService,
+    private orderService: OrderService
+  ) {
+  }
 
   ngOnInit(): void {
     // 1. Récupérer l'ID du resto depuis l'URL
@@ -161,53 +164,54 @@ export class ShopComponent implements OnInit {
 
   // --- VALIDATION COMMANDE (WHATSAPP) ---
 
-  confirmOrder(type: 'USER' | 'GUEST') {
-    // 1. Validation de l'Adresse si Livraison
+  async confirmOrder(type: 'USER' | 'GUEST') {
+
+    // 1. VALIDATION (Reste ici car c'est lié aux champs du formulaire HTML)
     if (this.deliveryOption === 'delivery' && !this.guestAddress) {
-      alert("Merci d'indiquer votre adresse de livraison ! 🏠");
+      alert("Merci d'indiquer votre adresse !");
       return;
     }
-
-    // 2. Validation Nom/Tel si Invité
     if (type === 'GUEST' && (!this.guestName || !this.guestPhone)) {
-      alert("Merci de remplir votre nom et téléphone pour qu'on puisse vous contacter !");
+      alert("Nom et téléphone obligatoires !");
       return;
     }
 
-    const deliveryCost = this.deliveryOption === 'delivery' ? 2 : 0;
-    const finalTotal = this.cartTotal + deliveryCost;
-
+    // 2. PRÉPARATION DES DONNÉES
+    const finalTotal = this.cartTotal + (this.deliveryOption === 'delivery' ? 2 : 0);
     const clientName = type === 'USER' ? (this.currentUser.displayName || this.currentUser.email) : this.guestName;
     const clientPhone = type === 'USER' ? (this.currentUser.phoneNumber || 'Non renseigné') : this.guestPhone;
 
-    // --- CONSTRUCTION DU MESSAGE ---
-    let message = `🛒 *NOUVELLE COMMANDE* (${type === 'USER' ? 'Membre' : 'Invité'})\n`;
-    message += `👤 Nom : ${clientName}\n`;
-    message += `📞 Tel : ${clientPhone}\n`;
+    const newOrder = {
+      restaurantId: this.currentRestaurant.id,
+      restaurantName: this.currentRestaurant.name,
+      userId: this.currentUser ? this.currentUser.uid : 'GUEST',
+      clientName: clientName,
+      clientPhone: clientPhone,
+      clientAddress: this.deliveryOption === 'delivery' ? this.guestAddress : 'Sur place',
+      deliveryOption: this.deliveryOption,
+      items: this.cartItems,
+      total: finalTotal,
+      note: this.orderNote || ''
+    };
 
-    // Ajout de l'adresse dans le message
-    if (this.deliveryOption === 'delivery') {
-      message += `🏠 *LIVRAISON* : ${this.guestAddress}\n`;
-    } else {
-      message += `🚶 *À EMPORTER*\n`;
+    try {
+      // 3. APPEL AU SERVICE (Le composant délègue le travail)
+      const orderId = await this.orderService.createOrder(newOrder);
+
+      // 4. GÉNÉRATION MESSAGE (Via le service)
+      const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
+
+      // 5. OUVERTURE WHATSAPP & REDIRECTION
+      const restoPhone = this.currentRestaurant.phoneNumber || "33600000000";
+      const url = `https://wa.me/${restoPhone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+
+      this.cartService.clearCart();
+      this.closeCheckout();
+      await this.router.navigate(['/order-tracking', orderId]);
+
+    } catch (error) {
+      console.error("Erreur", error);
     }
-
-    message += `\n📋 *Détail :*\n`;
-    this.cartItems.forEach(item => {
-      message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity}€)\n`;
-    });
-
-    if (this.orderNote) message += `\n📝 Note : ${this.orderNote}`;
-
-    message += `\n💰 *TOTAL : ${finalTotal} €*`;
-    message += `\n📍 Restaurant : ${this.currentRestaurant.name}`;
-
-    const restoPhone = this.currentRestaurant.phoneNumber || "33600000000";
-    const url = `https://wa.me/${restoPhone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-
-    this.cartService.clearCart();
-    this.closeCheckout();
-    this.router.navigate(['/order-tracking']);
   }
 }
