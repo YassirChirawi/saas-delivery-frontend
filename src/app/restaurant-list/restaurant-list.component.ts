@@ -1,22 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../services/api.service';
 import { forkJoin } from 'rxjs';
-import { Router } from '@angular/router'; // 👈 Importe Router
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-restaurants-list',
   templateUrl: './restaurant-list.component.html',
-
 })
 export class RestaurantsListComponent implements OnInit {
 
   allRestaurants: any[] = [];
   filteredRestaurants: any[] = [];
 
-  // 👇 NOUVEAU : Pour les filtres visuels
-  categories: string[] = [];       // La liste de toutes les catégories (Sushi, Burger...)
-  selectedCategory: string = '';   // La catégorie active (vide = tout afficher)
-
+  // Filtres visuels
+  categories: string[] = [];
+  selectedCategory: string = '';
   searchTerm: string = '';
   isLoading: boolean = true;
 
@@ -30,29 +28,25 @@ export class RestaurantsListComponent implements OnInit {
   loadData() {
     this.isLoading = true;
 
+    // On charge Restos ET Produits en parallèle pour générer les tags
     forkJoin({
-      restos: this.api.getRestaurants(),
+      restos: this.api.getRestaurants(), // Assure-toi que cette méthode existe (ou getAllRestaurants)
       products: this.api.getProducts()
     }).subscribe({
       next: (result) => {
         const { restos, products } = result;
 
-        // 1. EXTRAIRE LES CATÉGORIES UNIQUES (Pour les boutons)
-        // On récupère toutes les catégories non vides
+        // 1. EXTRAIRE LES CATÉGORIES UNIQUES
         const allCats = products
           .map(p => p.category)
-          .filter(c => c && c.trim() !== ''); // On enlève les vides
+          .filter(c => c && c.trim() !== '');
 
-        // On utilise Set pour enlever les doublons (ex: 50 fois 'Burger')
         this.categories = [...new Set(allCats)].sort();
 
-
-        // 2. ENRICHIR LES RESTAURANTS (Pour savoir qui vend quoi)
+        // 2. ENRICHIR LES RESTAURANTS (Tags)
         this.allRestaurants = restos.map(resto => {
           const sesProduits = products.filter(p => p.restaurantId === resto.id);
-          // On normalise en minuscule pour la comparaison
           const tags = [...new Set(sesProduits.map(p => p.category ? p.category.toLowerCase() : ''))];
-
           return { ...resto, tags };
         });
 
@@ -60,40 +54,37 @@ export class RestaurantsListComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Erreur', err);
+        console.error('Erreur chargement', err);
         this.isLoading = false;
       }
     });
   }
 
-  // 👇 ACTION : QUAND ON CLIQUE SUR UNE CATÉGORIE
-  selectCategory(cat: string) {
-    // Si on clique sur la catégorie déjà active, on la désactive (Toggle)
-    if (this.selectedCategory === cat) {
-      this.selectedCategory = '';
-    } else {
-      this.selectedCategory = cat;
-    }
+  // --- FILTRES ---
 
+  selectCategory(cat: string) {
+    if (this.selectedCategory === cat) {
+      this.selectedCategory = ''; // Toggle OFF
+    } else {
+      this.selectedCategory = cat; // Toggle ON
+    }
     this.applyFilters();
   }
 
-  // 👇 ACTION : QUAND ON TAPE DANS LA BARRE DE RECHERCHE
   onSearchChange() {
     this.applyFilters();
   }
 
-  // LOGIQUE CENTRALE DE FILTRAGE (Combine Recherche Texte + Catégorie)
   applyFilters() {
     let tempRestos = this.allRestaurants;
 
-    // 1. Filtre par Catégorie (Boutons)
+    // 1. Filtre Catégorie
     if (this.selectedCategory) {
       const catFilter = this.selectedCategory.toLowerCase();
       tempRestos = tempRestos.filter(r => r.tags.includes(catFilter));
     }
 
-    // 2. Filtre par Texte (Barre de recherche)
+    // 2. Filtre Texte
     if (this.searchTerm) {
       const textFilter = this.searchTerm.toLowerCase().trim();
       tempRestos = tempRestos.filter(r =>
@@ -104,43 +95,37 @@ export class RestaurantsListComponent implements OnInit {
 
     this.filteredRestaurants = tempRestos;
   }
-  // Ajoute cette méthode dans ta classe RestaurantsListComponent
 
-  isOpen(resto: any): boolean {
-    // 1. Si le switch manuel "isActive" est à false, c'est fermé d'office
-    if (resto.isActive === false) return false;
+  // --- NAVIGATION ---
 
-    // 2. Si pas d'horaires définis, on considère ouvert par défaut (ou fermé, selon ton choix)
-    if (!resto.openingTime || !resto.closingTime) return true;
-
-    // 3. Récupérer l'heure actuelle
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
-
-    // Convertir l'heure actuelle en minutes (ex: 14h30 = 14*60 + 30 = 870 min)
-    const currentTimeInMinutes = currentHour * 60 + currentMin;
-
-    // 4. Convertir les horaires du resto en minutes
-    const [openH, openM] = resto.openingTime.split(':').map(Number);
-    const [closeH, closeM] = resto.closingTime.split(':').map(Number);
-
-    const openTimeInMinutes = openH * 60 + openM;
-    const closeTimeInMinutes = closeH * 60 + closeM;
-
-    // 5. Comparaison
-    // Cas classique : Ouvre à 11h, Ferme à 23h
-    if (closeTimeInMinutes > openTimeInMinutes) {
-      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes;
-    }
-    // Cas de nuit : Ouvre à 18h, Ferme à 02h du matin
-    else {
-      return currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
-    }
-  }
-  testClick(id: string) {
-    console.log('CLICK DÉTECTÉ ! ID:', id);
-    // Si tu vois le log, force la navigation manuellement :
+  goToShop(id: string) {
     this.router.navigate(['/shop', id]);
+  }
+
+  // --- LOGIQUE D'OUVERTURE (MISE À JOUR) ---
+
+  isRestoOpen(restaurant: any): boolean {
+    // 1. Si pas d'horaires définis, on considère ouvert
+    if (!restaurant.openingHours) return true;
+
+    const now = new Date();
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayKey = dayKeys[now.getDay()];
+
+    const schedule = restaurant.openingHours[todayKey];
+
+    // 2. Si fermé ce jour-là
+    if (!schedule || schedule.closed) return false;
+
+    // 3. Comparaison de l'heure
+    const currentHours = now.getHours().toString().padStart(2, '0');
+    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+    return currentTimeStr >= schedule.open && currentTimeStr < schedule.close;
+  }
+
+  getStatusLabel(restaurant: any): string {
+    return this.isRestoOpen(restaurant) ? 'Ouvert 🟢' : 'Fermé 🔴';
   }
 }
