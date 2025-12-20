@@ -6,7 +6,7 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  fetchSignInMethodsForEmail, // 👈 AJOUT INDISPENSABLE ICI
+  fetchSignInMethodsForEmail,
   User,
   UserCredential
 } from 'firebase/auth';
@@ -18,7 +18,7 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs, updateDoc
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
 import { BehaviorSubject } from 'rxjs';
@@ -169,4 +169,21 @@ export class AuthService {
   getCurrentEmail(): string | null {
     return this.currentUserSubject.value?.email || null;
   }
+
+  async updateUserProfile(uid: string, data: any) {
+    const userRef = doc(this.db, 'users', uid);
+    await updateDoc(userRef, data);
+  }
+  getCurrentUser(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const unsubscribe = onAuthStateChanged(this.auth, (user) => {
+        unsubscribe(); // On arrête d'écouter dès qu'on a la réponse
+        resolve(user);
+      }, (error) => {
+        reject(error);
+      });
+    });
+  }
+
+
 }

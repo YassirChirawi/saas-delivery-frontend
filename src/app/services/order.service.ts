@@ -79,6 +79,26 @@ export class OrderService {
     });
   }
 
+  getOrdersByUser(userId: string): Observable<any[]> {
+    return new Observable((observer) => {
+      const ordersRef = collection(this.db, 'orders');
+
+      // On veut les commandes de l'utilisateur X, triées par date
+      const q = query(
+        ordersRef,
+        where('userId', '==', userId),
+        orderBy('createdAtTimestamp', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        observer.next(orders);
+      });
+
+      return () => unsubscribe();
+    });
+  }
+
   // --- 5. UTILITAIRE (Message WhatsApp) ---
   formatWhatsAppMessage(order: any, orderId: string): string {
     let message = `🛒 *COMMANDE #${orderId.slice(0, 5).toUpperCase()}*\n`;
@@ -105,3 +125,5 @@ export class OrderService {
     return message;
   }
 }
+
+

@@ -21,6 +21,7 @@ import { HeaderComponent } from './header/header.component';
 import {RouterModule} from "@angular/router";
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { RestaurantOrdersComponent } from './admin/restaurant-orders/restaurant-orders.component';
+import { ClientDashboardComponent } from './client/client-dashboard/client-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { RestaurantOrdersComponent } from './admin/restaurant-orders/restaurant-
     JoinUsComponent,
     HeaderComponent,
     OrderTrackingComponent,
-    RestaurantOrdersComponent
+    RestaurantOrdersComponent,
+    ClientDashboardComponent
   ],
   imports: [
     BrowserModule,

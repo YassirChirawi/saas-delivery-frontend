@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gray-50 pb-20">
+
+  <div class="bg-white shadow-sm pt-8 pb-4 px-6 mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Mon Compte</h1>
+        <p class="text-gray-500 text-sm">Bon retour, {{ currentUser?.displayName || 'Gourmand' }} 👋</p>
+      </div>
+      <button (click)="logout()" class="text-red-500 text-sm font-bold bg-red-50 px-3 py-1 rounded-full">
+        Déconnexion
+      </button>
+    </div>
+
+    <div class="flex gap-4 mt-6 overflow-x-auto">
+      <button (click)="activeTab = 'history'"
+              [class.bg-orange-500]="activeTab === 'history'"
+              [class.text-white]="activeTab === 'history'"
+              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
+        🕒 Historique
+      </button>
+      <button (click)="activeTab = 'profile'"
+              [class.bg-orange-500]="activeTab === 'profile'"
+              [class.text-white]="activeTab === 'profile'"
+              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
+        👤 Mes Infos
+      </button>
+      <button (click)="activeTab = 'support'"
+              [class.bg-orange-500]="activeTab === 'support'"
+              [class.text-white]="activeTab === 'support'"
+              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
+        🆘 Support
+      </button>
+    </div>
+  </div>
+
+  <div class="px-4 container mx-auto max-w-lg">
+
+    <div *ngIf="activeTab === 'history'" class="space-y-4 animate-fade-in">
+
+      <div *ngIf="orders.length === 0" class="text-center py-10 text-gray-400">
+        <div class="text-5xl mb-2">🍽️</div>
+        <p>Pas encore de commande.</p>
+        <a routerLink="/home" class="text-orange-500 font-bold mt-2 inline-block">Commander maintenant</a>
+      </div>
+
+      <div *ngFor="let order of orders" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide" [ngClass]="getStatusColor(order.status)">
+              {{ getStatusLabel(order.status) }}
+            </span>
+            <p class="text-gray-400 text-xs mt-2">{{ formatDate(order.createdAtTimestamp) }}</p>
+          </div>
+          <div class="text-right">
+            <span class="block font-bold text-lg text-gray-800">{{ order.total }} €</span>
+          </div>
+        </div>
+
+        <div class="border-t border-gray-100 my-2 pt-2">
+          <p class="font-bold text-sm text-gray-700">{{ order.restaurantName }}</p>
+          <p class="text-xs text-gray-500 line-clamp-1">
+            <span *ngFor="let item of order.items; let last = last">
+              {{ item.quantity }}x {{ item.name }}<span *ngIf="!last">, </span>
+            </span>
+          </p>
+        </div>
+
+        <button [routerLink]="['/order-tracking', order.id]" class="w-full mt-2 bg-gray-50 text-gray-600 font-bold py-2 rounded text-sm hover:bg-gray-100">
+          Voir le suivi >
+        </button>
+      </div>
+    </div>
+
+
+    <div *ngIf="activeTab === 'profile'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="space-y-4">
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">Nom complet</label>
+          <input formControlName="displayName" type="text" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">Téléphone</label>
+          <input formControlName="phone" type="tel" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">Adresse par défaut</label>
+          <textarea formControlName="address" rows="3" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500" placeholder="Pour gagner du temps..."></textarea>
+        </div>
+
+        <button type="submit" [disabled]="isUpdating" class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition shadow-lg">
+          {{ isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+        </button>
+
+      </form>
+    </div>
+
+
+    <div *ngIf="activeTab === 'support'" class="text-center animate-fade-in">
+      <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <div class="text-6xl mb-4">🛟</div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Besoin d'aide ?</h2>
+        <p class="text-gray-500 mb-6 text-sm">Un problème avec une commande ? Une question sur l'application ?</p>
+
+        <a href="https://wa.me/33612345678" target="_blank" class="block w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg mb-3 flex items-center justify-center gap-2">
+          <span>Contacter le Support WhatsApp</span>
+        </a>
+
+        <a href="mailto:support@mabouffe.com" class="block w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">
+          Envoyer un Email
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
