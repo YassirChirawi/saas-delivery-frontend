@@ -31,7 +31,7 @@ export class ShopComponent implements OnInit, OnDestroy {
   showCheckoutModal: boolean = false;
   deliveryOption: 'pickup' | 'delivery' = 'pickup';
   orderNote: string = '';
-  guestAddress: string = ''; // Adresse si livraison
+  guestAddress: string = '';
 
   // Utilisateur
   currentUser: any = null;
@@ -51,31 +51,31 @@ export class ShopComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // 1. Récupérer l'ID du resto depuis l'URL
     const id = this.route.snapshot.paramMap.get('id');
+
     if (id) {
+      // 1. Charger les infos du Resto (Temps Réel pour ouverture/fermeture)
       this.api.getRestaurantRealtime(id).subscribe(data => {
-        console.log("Mise à jour reçue du resto :", data); // Pour vérifier
-        this.currentRestaurant = data; // Pas besoin de rajouter {id, ...} car le service le fait
+        this.currentRestaurant = data;
 
-        // On revérifie l'ouverture immédiatement dès que les données changent
+        // Vérif immédiate + Timer
         this.checkOpeningStatus();
-
-        // Si le timer n'est pas lancé, on le lance
         if (!this.timeCheckerInterval) {
           this.timeCheckerInterval = setInterval(() => this.checkOpeningStatus(), 60000);
         }
       });
+
+      // 2. Charger les Produits (C'EST ICI QUE ÇA MANQUAIT !)
+      this.loadProducts(id);
     }
 
-    // 2. Écouter le Panier (Mise à jour temps réel)
+    // 3. Panier & Auth
     this.cartService.cart$.subscribe(items => {
       this.cartItems = items;
       this.cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
       this.cartTotal = this.cartService.getTotalPrice();
     });
 
-    // 3. Vérifier si utilisateur connecté
     this.auth.user$.subscribe(user => {
       this.currentUser = user;
     });
@@ -87,21 +87,21 @@ export class ShopComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadRestaurantData(id: string) {
-    // Charger les infos du resto
-    this.api.getRestaurantById(id).subscribe(data => {
-      this.currentRestaurant = { id, ...data };
+  // 👇 NOUVELLE MÉTHODE POUR CHARGER LES PRODUITS CORRECTEMENT
+  loadProducts(restaurantId: string) {
+    this.api.getProductsByRestaurant(restaurantId).subscribe({
+      next: (data) => {
+        console.log(`📦 ${data.length} produits chargés`);
+        this.allProducts = data;
 
-      // Lancer la vérification des horaires
-      this.checkOpeningStatus();
-      this.timeCheckerInterval = setInterval(() => this.checkOpeningStatus(), 60000);
-    });
+        // 1. Générer les catégories uniques (en ignorant les vides)
+        const categories = data.map((p: any) => p.category).filter((c: any) => c && c.trim() !== '');
+        this.uniqueCategories = [...new Set(categories)].sort();
 
-    // Charger les produits
-    this.api.getProductsByRestaurant(id).subscribe(data => {
-      this.allProducts = data;
-      this.displayedProducts = data;
-      this.uniqueCategories = [...new Set(data.map((p: any) => p.category))].sort();
+        // 2. Initialiser l'affichage
+        this.applyFilters();
+      },
+      error: (err) => console.error("Erreur chargement produits", err)
     });
   }
 
@@ -110,10 +110,12 @@ export class ShopComponent implements OnInit, OnDestroy {
   applyFilters() {
     let temp = this.allProducts;
 
+    // Filtre Catégorie
     if (this.selectedCategory !== 'Tout') {
       temp = temp.filter(p => p.category === this.selectedCategory);
     }
 
+    // Filtre Recherche
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       temp = temp.filter(p => p.name.toLowerCase().includes(term));
@@ -127,33 +129,21 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  scrollToCategory(category: string) {
-    // Si tu veux scroller, sinon garde ta logique de filtre
-    this.selectedCategory = category;
-    this.applyFilters();
-  }
-
   // --- ACTIONS PANIER ---
 
   addToCart(product: Product) {
-    // 🔒 SÉCURITÉ : Si pas connecté, on bloque
     if (!this.currentUser) {
-      const wantToLogin = confirm("Vous devez avoir un compte pour commander. Voulez-vous vous connecter ou créer un compte ?");
-      if (wantToLogin) {
+      if(confirm("Vous devez avoir un compte pour commander. Se connecter ?")) {
         this.router.navigate(['/login']);
       }
       return;
     }
 
-    // Vérification conflit Restaurant
     if (this.cartItems.length > 0 && this.cartItems[0].restaurantId !== this.currentRestaurant.id) {
-      if (!confirm("Votre panier contient des produits d'un autre restaurant. Vider le panier ?")) {
-        return;
-      }
+      if (!confirm("Votre panier contient des produits d'un autre restaurant. Vider le panier ?")) return;
       this.cartService.clearCart();
     }
 
-    // Ajout ID resto
     const itemToAdd = { ...product, restaurantId: this.currentRestaurant.id };
     this.cartService.addToCart(itemToAdd);
   }
@@ -169,40 +159,28 @@ export class ShopComponent implements OnInit, OnDestroy {
   // --- MODALE & CHECKOUT ---
 
   openCheckout() {
-    // Sécurité supplémentaire : on n'ouvre pas si fermé
-    if (this.isRestaurantOpen) {
-      this.showCheckoutModal = true;
-    }
+    if (this.isRestaurantOpen) this.showCheckoutModal = true;
   }
 
   closeCheckout() {
     this.showCheckoutModal = false;
   }
 
-  // --- VALIDATION COMMANDE ---
-
   async confirmOrder() {
     if (this.deliveryOption === 'delivery' && !this.guestAddress) {
-      alert("Merci d'indiquer votre adresse de livraison ! 🏠");
+      alert("Merci d'indiquer votre adresse !");
       return;
     }
-
-    if (!this.currentUser) {
-      alert("Session expirée. Veuillez vous reconnecter.");
-      this.router.navigate(['/login']);
-      return;
-    }
+    if (!this.currentUser) return;
 
     const finalTotal = this.cartTotal + (this.deliveryOption === 'delivery' ? 2 : 0);
-    const clientName = this.currentUser.displayName || this.currentUser.email;
-    const clientPhone = this.currentUser.phoneNumber || 'Non renseigné';
 
     const newOrder = {
       restaurantId: this.currentRestaurant.id,
       restaurantName: this.currentRestaurant.name,
       userId: this.currentUser.uid,
-      clientName: clientName,
-      clientPhone: clientPhone,
+      clientName: this.currentUser.displayName || this.currentUser.email,
+      clientPhone: this.currentUser.phoneNumber || 'Non renseigné',
       clientAddress: this.deliveryOption === 'delivery' ? this.guestAddress : 'Sur place',
       deliveryOption: this.deliveryOption,
       items: this.cartItems,
@@ -214,42 +192,33 @@ export class ShopComponent implements OnInit, OnDestroy {
       const orderId = await this.orderService.createOrder(newOrder);
       const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
 
-      // Récupération numéro (Priorité WhatsApp)
-      const rawPhone = this.currentRestaurant.whatsappPhone ||
-        this.currentRestaurant.phoneNumber ||
-        this.currentRestaurant.phone;
-
+      const rawPhone = this.currentRestaurant.whatsappPhone || this.currentRestaurant.phoneNumber || this.currentRestaurant.phone;
       if (!rawPhone) {
-        alert("Impossible de commander : Pas de numéro configuré.");
+        alert("Pas de numéro configuré pour ce restaurant.");
         return;
       }
 
-      const targetPhone = this.formatPhoneForWhatsApp(rawPhone);
-      const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/${this.formatPhoneForWhatsApp(rawPhone)}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
 
       this.cartService.clearCart();
       this.closeCheckout();
       this.router.navigate(['/order-tracking', orderId]);
-
     } catch (error) {
-      console.error("Erreur", error);
+      console.error(error);
+      alert("Erreur lors de la commande.");
     }
   }
-
-  // --- UTILITAIRES ---
 
   formatPhoneForWhatsApp(phone: string): string {
     if (!phone) return "";
     let clean = phone.replace(/[^\d]/g, '');
-    if (clean.startsWith('0')) {
-      clean = '33' + clean.substring(1);
-    }
+    if (clean.startsWith('0')) clean = '33' + clean.substring(1);
     return clean;
   }
 
   checkOpeningStatus() {
-    if (!this.currentRestaurant || !this.currentRestaurant.openingHours) {
+    if (!this.currentRestaurant?.openingHours) {
       this.isRestaurantOpen = true;
       this.openingStatusLabel = '🟢 Ouvert';
       return;
@@ -257,29 +226,21 @@ export class ShopComponent implements OnInit, OnDestroy {
 
     const now = new Date();
     const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const todayKey = dayKeys[now.getDay()];
-    const todaySchedule = this.currentRestaurant.openingHours[todayKey];
+    const todaySchedule = this.currentRestaurant.openingHours[dayKeys[now.getDay()]];
 
     if (!todaySchedule || todaySchedule.closed) {
       this.isRestaurantOpen = false;
-      this.openingStatusLabel = '🔴 Fermé aujourd\'hui';
+      this.openingStatusLabel = '🔴 Fermé';
       return;
     }
 
-    const currentHours = now.getHours().toString().padStart(2, '0');
-    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
-    const currentTimeStr = `${currentHours}:${currentMinutes}`;
-
-    if (currentTimeStr >= todaySchedule.open && currentTimeStr < todaySchedule.close) {
+    const currentStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    if (currentStr >= todaySchedule.open && currentStr < todaySchedule.close) {
       this.isRestaurantOpen = true;
       this.openingStatusLabel = `🟢 Ouvert jusqu'à ${todaySchedule.close}`;
     } else {
       this.isRestaurantOpen = false;
-      if (currentTimeStr < todaySchedule.open) {
-        this.openingStatusLabel = `🔴 Fermé - Ouvre à ${todaySchedule.open}`;
-      } else {
-        this.openingStatusLabel = `🔴 Fermé depuis ${todaySchedule.close}`;
-      }
+      this.openingStatusLabel = currentStr < todaySchedule.open ? `🔴 Ouvre à ${todaySchedule.open}` : '🔴 Fermé';
     }
   }
 }
