@@ -5,6 +5,9 @@ import { switchMap, map } from 'rxjs/operators'; // 👈 Ajout des opérateurs R
 import { Product } from '../models/product.model';
 import { Restaurant } from '../models/restaurant.model';
 import { environment } from 'src/environments/environment';
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +15,8 @@ import { environment } from 'src/environments/environment';
 export class ApiService {
 
   private baseUrl = environment.apiUrl;
+  private app = initializeApp(environment.firebase);
+  private db = getFirestore(this.app);
 
   constructor(private http: HttpClient) {}
 
@@ -100,6 +105,8 @@ export class ApiService {
     return this.http.put(`${this.baseUrl}/products/${id}`, product);
   }
 
+
+
   // Delete Product
   deleteProduct(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/products/${id}`, { responseType: 'text' });
@@ -139,4 +146,13 @@ export class ApiService {
   createOrder(orderData: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/orders`, orderData, { responseType: 'text' });
   }
+
+  async updateRestaurantSettings(id: string, data: any): Promise<void> {
+    const restoRef = doc(this.db, 'restaurants', id);
+    // On met à jour uniquement les champs envoyés (ex: openingHours) sans écraser le reste
+    await updateDoc(restoRef, data);
+  }
+
+
+
 }

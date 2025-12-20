@@ -11,27 +11,63 @@
       </button>
     </div>
 
-    <div class="flex gap-4 mt-6 overflow-x-auto">
+    <div class="flex gap-3 mt-6 overflow-x-auto pb-2 no-scrollbar">
+
       <button (click)="activeTab = 'history'"
+              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
               [class.bg-orange-500]="activeTab === 'history'"
               [class.text-white]="activeTab === 'history'"
-              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
-        🕒 Historique
+              [class.border-orange-500]="activeTab === 'history'"
+              [class.shadow-md]="activeTab === 'history'"
+              [class.transform]="activeTab === 'history'"
+              [class.scale-105]="activeTab === 'history'"
+
+              [class.bg-white]="activeTab !== 'history'"
+              [class.text-gray-600]="activeTab !== 'history'"
+              [class.border-gray-200]="activeTab !== 'history'"
+              [class.hover:bg-orange-50]="activeTab !== 'history'"
+              [class.hover:text-orange-600]="activeTab !== 'history'"
+              [class.hover:border-orange-200]="activeTab !== 'history'">
+        <span>🕒</span> Historique
       </button>
+
       <button (click)="activeTab = 'profile'"
+              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
               [class.bg-orange-500]="activeTab === 'profile'"
               [class.text-white]="activeTab === 'profile'"
-              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
-        👤 Mes Infos
+              [class.border-orange-500]="activeTab === 'profile'"
+              [class.shadow-md]="activeTab === 'profile'"
+              [class.transform]="activeTab === 'profile'"
+              [class.scale-105]="activeTab === 'profile'"
+
+              [class.bg-white]="activeTab !== 'profile'"
+              [class.text-gray-600]="activeTab !== 'profile'"
+              [class.border-gray-200]="activeTab !== 'profile'"
+              [class.hover:bg-orange-50]="activeTab !== 'profile'"
+              [class.hover:text-orange-600]="activeTab !== 'profile'"
+              [class.hover:border-orange-200]="activeTab !== 'profile'">
+        <span>👤</span> Mes Infos
       </button>
+
       <button (click)="activeTab = 'support'"
+              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
               [class.bg-orange-500]="activeTab === 'support'"
               [class.text-white]="activeTab === 'support'"
-              class="px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap bg-white text-gray-600 border border-gray-100">
-        🆘 Support
+              [class.border-orange-500]="activeTab === 'support'"
+              [class.shadow-md]="activeTab === 'support'"
+              [class.transform]="activeTab === 'support'"
+              [class.scale-105]="activeTab === 'support'"
+
+              [class.bg-white]="activeTab !== 'support'"
+              [class.text-gray-600]="activeTab !== 'support'"
+              [class.border-gray-200]="activeTab !== 'support'"
+              [class.hover:bg-orange-50]="activeTab !== 'support'"
+              [class.hover:text-orange-600]="activeTab !== 'support'"
+              [class.hover:border-orange-200]="activeTab !== 'support'">
+        <span>🆘</span> Support
       </button>
+
     </div>
-  </div>
 
   <div class="px-4 container mx-auto max-w-lg">
 

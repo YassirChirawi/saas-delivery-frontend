@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
-import { OrderService } from '../services/order.service'; // 👈 IMPORT ORDER SERVICE
+import { OrderService } from '../services/order.service';
 import { Restaurant } from '../models/restaurant.model';
 import { Product } from '../models/product.model';
 import { Router } from '@angular/router';
@@ -15,7 +15,8 @@ import { getAuth } from 'firebase/auth';
 export class AdminComponent implements OnInit {
 
   // --- GESTION DES ONGLETS ---
-  viewMode: 'orders' | 'products' = 'orders'; // Par défaut, on affiche les commandes (plus important)
+  // ✅ CORRECTION : Ajout de 'stats' dans le type
+  viewMode: 'orders' | 'products' | 'stats' = 'orders';
 
   // --- GESTION PRODUITS ---
   productForm: FormGroup;
@@ -25,15 +26,33 @@ export class AdminComponent implements OnInit {
   editingProductId: string | null = null;
 
   // --- GESTION COMMANDES ---
-  orders: any[] = []; // 👈 LISTE DES COMMANDES
+  orders: any[] = [];
 
   // --- INFO RESTO ---
   myRestaurant: Restaurant | null = null;
 
+  // --- STATISTIQUES ---
+  totalRevenue = 0;
+  totalOrdersCount = 0;
+  todayRevenue = 0;
+  averageBasket = 0;
+
+  // --- VARIABLES POUR LES HORAIRES ---
+  schedule: any = {};
+  days = [
+    { key: 'monday', label: 'Lundi' },
+    { key: 'tuesday', label: 'Mardi' },
+    { key: 'wednesday', label: 'Mercredi' },
+    { key: 'thursday', label: 'Jeudi' },
+    { key: 'friday', label: 'Vendredi' },
+    { key: 'saturday', label: 'Samedi' },
+    { key: 'sunday', label: 'Dimanche' }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
-    private orderService: OrderService, // 👈 INJECTION
+    private orderService: OrderService,
     public auth: AuthService,
     private router: Router
   ) {
@@ -53,21 +72,30 @@ export class AdminComponent implements OnInit {
 
     if (!currentUser) return;
 
+    // 1. Récupérer le profil utilisateur
     const profile = await this.auth.getUserProfile(currentUser.uid);
 
+    // Sécurité : Redirection si Super Admin
     if (profile && profile.role === UserRole.SUPER_ADMIN) {
       this.router.navigate(['/super-admin']);
       return;
     }
 
+    // 2. Récupérer le Restaurant
+    // ✅ CORRECTION : Fusion de la logique ici. On utilise profile.email.
     if (profile && profile.email) {
       this.apiService.getRestaurantByEmail(profile.email).subscribe({
         next: (resto) => {
           if (resto) {
             this.myRestaurant = resto;
+
+            // Pré-remplir le formulaire produit
             this.productForm.patchValue({ restaurantId: resto.id });
 
-            // 👇 ON CHARGE TOUT
+            // Initialiser les horaires
+            this.initSchedule(resto);
+
+            // Charger les données
             this.loadProducts(resto.id!);
             this.loadOrders(resto.id!);
           }
@@ -77,14 +105,28 @@ export class AdminComponent implements OnInit {
   }
 
   // ==========================================
-  // 👇 PARTIE COMMANDES (DASHBOARD)
+  // 👇 PARTIE COMMANDES & STATS
   // ==========================================
 
   loadOrders(restaurantId: string) {
-    // Abonnement Temps Réel
     this.orderService.getOrdersByRestaurant(restaurantId).subscribe(data => {
       this.orders = data;
+      // ✅ AJOUT : On recalcule les stats à chaque mise à jour des commandes
+      this.calculateStats();
     });
+  }
+
+  calculateStats() {
+    const doneOrders = this.orders.filter(o => o.status === 'DONE');
+
+    this.totalOrdersCount = doneOrders.length;
+    this.totalRevenue = doneOrders.reduce((acc, order) => acc + (order.total || 0), 0);
+    this.averageBasket = this.totalOrdersCount > 0 ? (this.totalRevenue / this.totalOrdersCount) : 0;
+
+    const todayStr = new Date().toDateString();
+    this.todayRevenue = doneOrders
+      .filter(o => new Date(o.createdAtTimestamp).toDateString() === todayStr)
+      .reduce((acc, order) => acc + (order.total || 0), 0);
   }
 
   updateOrderStatus(order: any, status: string) {
@@ -126,7 +168,7 @@ export class AdminComponent implements OnInit {
     }
 
     if (this.isEditing && this.editingProductId) {
-      // TODO: Appeler updateProduct ici quand tu l'auras ajouté dans ApiService
+      // TODO: Implémenter updateProduct dans ApiService
       console.log("Update non implémenté pour", this.editingProductId);
       this.isSubmitting = false;
     } else {
@@ -152,7 +194,7 @@ export class AdminComponent implements OnInit {
       imageUrl: product.imageUrl,
       restaurantId: product.restaurantId
     });
-    this.viewMode = 'products'; // Force l'affichage de l'onglet produits
+    this.viewMode = 'products';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -162,7 +204,7 @@ export class AdminComponent implements OnInit {
 
   deleteProduct(id: string) {
     if(confirm('Supprimer ce plat ?')) {
-      // TODO: Appeler deleteProduct ici quand tu l'auras ajouté dans ApiService
+      // TODO: Implémenter deleteProduct dans ApiService
       console.log("Delete non implémenté pour", id);
     }
   }
@@ -179,5 +221,35 @@ export class AdminComponent implements OnInit {
 
   logout() {
     this.auth.logout();
+  }
+
+  // ==========================================
+  // 👇 PARTIE HORAIRES
+  // ==========================================
+
+  // ✅ AJOUT : Cette méthode manquait
+  initSchedule(restaurant: Restaurant) {
+    const defaultDay = { open: '11:00', close: '22:00', closed: false };
+
+    this.days.forEach(day => {
+      if (restaurant.openingHours && restaurant.openingHours[day.key]) {
+        this.schedule[day.key] = { ...restaurant.openingHours[day.key] };
+      } else {
+        this.schedule[day.key] = { ...defaultDay };
+      }
+    });
+  }
+
+  saveSchedule() {
+    if (!this.myRestaurant?.id) return;
+
+    this.apiService.updateRestaurantSettings(this.myRestaurant.id, {
+      openingHours: this.schedule
+    }).then(() => {
+      alert("Horaires mis à jour ! 🕒 (Visible immédiatement par les clients)");
+    }).catch(err => {
+      console.error(err);
+      alert("Erreur lors de la sauvegarde.");
+    });
   }
 }
