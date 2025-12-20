@@ -121,33 +121,45 @@ export class AuthService {
 
   // 4. INSCRIPTION (Utilisé par Client ET Restaurateur)
   async register(email: string, pass: string) {
+
     // 1. On crée le compte dans Firebase Auth
     const credential = await createUserWithEmailAndPassword(this.auth, email, pass);
     const uid = credential.user.uid;
-    let assignedRole = UserRole.CLIENT; // Par défaut, c'est un client
-    let linkedRestaurantId = null;
 
-    // 2. On revérifie si cet email est un "VIP" (Propriétaire de Resto) pour attribuer le rôle
+    // Variables par défaut
+    let assignedRole = UserRole.CLIENT;
+    let linkedRestaurantId: string | null = null; // On type explicitement
+
+    // 2. On vérifie si cet email est un "VIP" (Propriétaire de Resto)
     const restaurantsRef = collection(this.db, "restaurants");
     const q = query(restaurantsRef, where("email", "==", email));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      // BINGO ! C'est un restaurateur connu
+      // C'est un restaurateur !
       const restoDoc = querySnapshot.docs[0];
       assignedRole = UserRole.RESTAURANT_ADMIN;
       linkedRestaurantId = restoDoc.id;
-      console.log(`🎉 Compte Restaurateur activé pour ${restoDoc.data()['name']}`);
+      console.log(`🎉 Compte Restaurateur détecté pour ${restoDoc.data()['name']}`);
     }
 
-    // 3. On crée le profil dans Firestore avec le bon rôle
-    const userProfile: UserProfile = {
+    // 3. On prépare l'objet pour Firestore
+    // On utilise 'any' temporairement ici pour éviter les soucis de typage strict sur restaurantId
+    const userProfile: any = {
       uid: uid,
       email: email,
       role: assignedRole,
-      restaurantId: linkedRestaurantId || undefined
+      createdAt: new Date().toISOString() // Toujours utile !
     };
 
+    // ⚠️ LA CORRECTION EST ICI :
+    // On ajoute le champ SEULEMENT s'il y a un ID. Sinon, on ne met rien du tout.
+    // C'est plus propre que de mettre "null".
+    if (linkedRestaurantId) {
+      userProfile.restaurantId = linkedRestaurantId;
+    }
+
+    // 4. Sauvegarde
     await setDoc(doc(this.db, "users", uid), userProfile);
 
     return credential;
