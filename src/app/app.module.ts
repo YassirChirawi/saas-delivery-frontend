@@ -20,6 +20,7 @@ import { JoinUsComponent } from './join-us/join-us.component';
 import { HeaderComponent } from './header/header.component';
 import {RouterModule} from "@angular/router";
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
+import { RestaurantOrdersComponent } from './admin/restaurant-orders/restaurant-orders.component';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { OrderTrackingComponent } from './order-tracking/order-tracking.componen
     RegisterComponent,
     JoinUsComponent,
     HeaderComponent,
-    OrderTrackingComponent
+    OrderTrackingComponent,
+    RestaurantOrdersComponent
   ],
   imports: [
     BrowserModule,
