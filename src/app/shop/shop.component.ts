@@ -222,7 +222,9 @@ export class ShopComponent implements OnInit {
       const orderId = await this.orderService.createOrder(newOrder);
       const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
 
-      const rawPhone = this.currentRestaurant.phoneNumber || this.currentRestaurant.phone;
+      const rawPhone = this.currentRestaurant.whatsappPhone ||
+        this.currentRestaurant.phoneNumber ||
+        this.currentRestaurant.phone;
       if (!rawPhone) {
         alert("Pas de numéro resto");
         return;
