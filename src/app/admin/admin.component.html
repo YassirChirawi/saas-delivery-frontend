@@ -13,10 +13,10 @@
       </button>
     </div>
 
-    <div class="container mx-auto px-4 flex gap-6 border-b border-gray-100">
+    <div class="container mx-auto px-4 flex gap-6 border-b border-gray-100 overflow-x-auto">
 
       <button (click)="viewMode = 'orders'"
-              class="pb-3 border-b-2 font-bold transition-colors flex items-center gap-2"
+              class="pb-3 border-b-2 font-bold transition-colors flex items-center gap-2 whitespace-nowrap"
               [class.border-orange-500]="viewMode === 'orders'"
               [class.text-orange-600]="viewMode === 'orders'"
               [class.border-transparent]="viewMode !== 'orders'"
@@ -28,12 +28,21 @@
       </button>
 
       <button (click)="viewMode = 'products'"
-              class="pb-3 border-b-2 font-bold transition-colors"
+              class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
               [class.border-orange-500]="viewMode === 'products'"
               [class.text-orange-600]="viewMode === 'products'"
               [class.border-transparent]="viewMode !== 'products'"
               [class.text-gray-400]="viewMode !== 'products'">
         🍔 Mon Menu
+      </button>
+
+      <button (click)="viewMode = 'stats'"
+              class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
+              [class.border-orange-500]="viewMode === 'stats'"
+              [class.text-orange-600]="viewMode === 'stats'"
+              [class.border-transparent]="viewMode !== 'stats'"
+              [class.text-gray-400]="viewMode !== 'stats'">
+        📊 Gestion & Stats
       </button>
 
     </div>
@@ -42,12 +51,10 @@
   <div class="container mx-auto px-4">
 
     <div *ngIf="viewMode === 'orders'" class="animate-fade-in">
-
       <app-restaurant-orders
         [orders]="orders"
         (statusChanged)="updateOrderStatus($event.order, $event.newStatus)">
       </app-restaurant-orders>
-
     </div>
 
 
@@ -59,7 +66,6 @@
         </h2>
 
         <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-4">
-
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-1">Nom du plat</label>
@@ -70,7 +76,6 @@
               <input type="number" formControlName="price" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
             </div>
           </div>
-
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">Catégorie</label>
             <select formControlName="category" class="w-full border rounded-lg p-2 bg-white">
@@ -82,17 +87,14 @@
               <option value="AUTRE">🍽️ Autre</option>
             </select>
           </div>
-
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
             <textarea formControlName="description" rows="2" class="w-full border rounded-lg p-2 outline-none"></textarea>
           </div>
-
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">URL Image</label>
             <input type="text" formControlName="imageUrl" placeholder="https://..." class="w-full border rounded-lg p-2 outline-none text-sm text-gray-500">
           </div>
-
           <div class="flex gap-2 pt-2">
             <button type="submit" [disabled]="isSubmitting"
                     class="flex-1 bg-orange-600 text-white font-bold py-2 rounded-lg hover:bg-orange-700 transition">
@@ -103,13 +105,11 @@
               Annuler
             </button>
           </div>
-
         </form>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div *ngFor="let product of products" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start group hover:shadow-md transition">
-
           <div class="flex gap-4">
             <div class="w-16 h-16 rounded-lg bg-gray-100 bg-cover bg-center shrink-0"
                  [style.backgroundImage]="'url(' + (product.imageUrl || 'assets/default-food.png') + ')'">
@@ -120,12 +120,79 @@
               <span class="text-orange-600 font-bold">{{ product.price }} €</span>
             </div>
           </div>
-
           <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button (click)="editProduct(product)" class="text-blue-500 hover:bg-blue-50 p-1 rounded">✏️</button>
             <button (click)="deleteProduct(product.id!)" class="text-red-500 hover:bg-red-50 p-1 rounded">🗑️</button>
           </div>
+        </div>
+      </div>
+    </div>
 
+
+    <div *ngIf="viewMode === 'stats'" class="animate-fade-in py-6">
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-gray-500 text-sm font-bold uppercase">Aujourd'hui</p>
+          <p class="text-3xl font-extrabold text-green-600 mt-2">{{ todayRevenue }} €</p>
+          <p class="text-xs text-gray-400 mt-1">Recettes encaissées</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-gray-500 text-sm font-bold uppercase">Commandes Terminées</p>
+          <p class="text-3xl font-extrabold text-gray-800 mt-2">{{ totalOrdersCount }}</p>
+          <p class="text-xs text-gray-400 mt-1">Total historique</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-gray-500 text-sm font-bold uppercase">Chiffre d'Affaires</p>
+          <p class="text-3xl font-extrabold text-blue-600 mt-2">{{ totalRevenue }} €</p>
+          <p class="text-xs text-gray-400 mt-1">Total historique</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <p class="text-gray-500 text-sm font-bold uppercase">Panier Moyen</p>
+          <p class="text-3xl font-extrabold text-orange-600 mt-2">{{ formatPrice(averageBasket) }} €</p>
+          <p class="text-xs text-gray-400 mt-1">Moyenne par commande</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 max-w-4xl mx-auto overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">Horaires d'ouverture 🕒</h2>
+            <p class="text-sm text-gray-500">Définissez quand vos clients peuvent commander.</p>
+          </div>
+          <button (click)="saveSchedule()" class="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-black transition text-sm">
+            Sauvegarder
+          </button>
+        </div>
+
+        <div class="p-6">
+          <div class="grid gap-3">
+
+            <div *ngFor="let day of days" class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition">
+
+              <div class="w-28 font-bold text-gray-700 capitalize">{{ day.label }}</div>
+
+              <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" [(ngModel)]="schedule[day.key].closed" class="w-5 h-5 text-orange-600 rounded">
+                  <span class="text-sm font-medium text-gray-600">Fermé</span>
+                </label>
+              </div>
+
+              <div class="flex items-center gap-2 transition-opacity"
+                   [class.opacity-30]="schedule[day.key].closed"
+                   [class.pointer-events-none]="schedule[day.key].closed">
+                <input type="time" [(ngModel)]="schedule[day.key].open" class="border p-2 rounded bg-white font-mono text-sm">
+                <span class="text-gray-400">à</span>
+                <input type="time" [(ngModel)]="schedule[day.key].close" class="border p-2 rounded bg-white font-mono text-sm">
+              </div>
+
+            </div>
+          </div>
         </div>
       </div>
 

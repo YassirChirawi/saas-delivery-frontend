@@ -252,4 +252,9 @@ export class AdminComponent implements OnInit {
       alert("Erreur lors de la sauvegarde.");
     });
   }
+
+  formatPrice(price: number): string {
+    if (price === undefined || price === null) return '0.00';
+    return price.toFixed(2); // Méthode standard JavaScript
+  }
 }
