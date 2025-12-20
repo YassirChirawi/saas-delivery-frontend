@@ -9,6 +9,7 @@ import { LoginComponent } from './login/login.component';
 import { AuthGuard } from './guards/auth.guard';
 import { RegisterComponent} from "./register/register.component";
 import {JoinUsComponent} from "./join-us/join-us.component";
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -32,6 +33,7 @@ const routes: Routes = [
   },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'order-tracking/:id', component: OrderTrackingComponent },
   { path: 'join-us', component: JoinUsComponent }
 ];
 

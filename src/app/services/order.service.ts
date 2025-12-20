@@ -1,11 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  doc,
-  onSnapshot
-} from 'firebase/firestore'; // 👈 Imports Firebase
+  getFirestore, collection, addDoc, doc, onSnapshot,
+  query, where, orderBy, updateDoc
+} from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
@@ -15,36 +12,30 @@ import { Observable } from 'rxjs';
 })
 export class OrderService {
 
-  // Initialisation de la BDD
   private app = initializeApp(environment.firebase);
   private db = getFirestore(this.app);
 
   constructor() { }
 
-  // 1. SAUVEGARDER LA COMMANDE DANS FIREBASE
-  // On renvoie une "Promise" qui contient l'ID de la commande créée
+  // --- 1. CRÉATION (Côté Client) ---
   async createOrder(orderData: any): Promise<string> {
     const ordersRef = collection(this.db, 'orders');
 
-    // On ajoute des champs techniques (Date, Statut)
     const finalOrder = {
       ...orderData,
-      status: 'PENDING', // En attente
+      status: 'PENDING', // Statut initial
       createdAt: new Date().toISOString(),
-      createdAtTimestamp: Date.now() // Pour trier plus facilement
+      createdAtTimestamp: Date.now() // Pour le tri
     };
 
-    // Firebase crée le document et nous donne la référence
     const docRef = await addDoc(ordersRef, finalOrder);
-    return docRef.id; // On retourne l'ID (ex: "7dh3s8d...") pour le suivi
+    return docRef.id;
   }
 
-  // 2. SUIVRE UNE COMMANDE EN TEMPS RÉEL (Pour le futur écran de tracking)
+  // --- 2. LECTURE CLIENT (Tracking Unitaire) ---
   getOrderRealtime(orderId: string): Observable<any> {
     return new Observable((observer) => {
       const docRef = doc(this.db, 'orders', orderId);
-
-      // onSnapshot = Écoute permanente. Si le restau change le statut, ça se met à jour ici.
       const unsubscribe = onSnapshot(docRef, (doc) => {
         if (doc.exists()) {
           observer.next({ id: doc.id, ...doc.data() });
@@ -52,37 +43,61 @@ export class OrderService {
           observer.error("Commande introuvable");
         }
       });
+      return () => unsubscribe();
+    });
+  }
+
+  // --- 3. LECTURE RESTAURATEUR (Dashboard Temps Réel) ---
+  getOrdersByRestaurant(restaurantId: string): Observable<any[]> {
+    return new Observable((observer) => {
+      const ordersRef = collection(this.db, 'orders');
+
+      // On veut les commandes de CE restaurant, triées par date (récentes en haut)
+      const q = query(
+        ordersRef,
+        where('restaurantId', '==', restaurantId),
+        orderBy('createdAtTimestamp', 'desc')
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        observer.next(orders);
+      }, (error) => {
+        console.error("Erreur récupération commandes:", error);
+        observer.error(error);
+      });
 
       return () => unsubscribe();
     });
   }
 
-  // 3. GÉNÉRER LE TEXTE WHATSAPP
-  // On sort ça du Component pour garder le code propre
-  formatWhatsAppMessage(order: any, orderId: string): string {
-    let message = `🛒 *NOUVELLE COMMANDE #${orderId.slice(0, 5).toUpperCase()}*\n`;
+  // --- 4. ACTION RESTAURATEUR (Changer statut) ---
+  async updateStatus(orderId: string, newStatus: string): Promise<void> {
+    const orderRef = doc(this.db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      status: newStatus
+    });
+  }
 
-    // Infos Client
+  // --- 5. UTILITAIRE (Message WhatsApp) ---
+  formatWhatsAppMessage(order: any, orderId: string): string {
+    let message = `🛒 *COMMANDE #${orderId.slice(0, 5).toUpperCase()}*\n`;
     message += `👤 Nom : ${order.clientName}\n`;
     message += `📞 Tel : ${order.clientPhone}\n`;
 
-    // Infos Livraison
     if (order.deliveryOption === 'delivery') {
       message += `🏠 *LIVRAISON* : ${order.clientAddress}\n`;
     } else {
       message += `🚶 *À EMPORTER*\n`;
     }
 
-    message += `\n📋 *Détail de la commande :*\n`;
-
-    // Liste des produits
+    message += `\n📋 *Détail :*\n`;
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach((item: any) => {
         message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity}€)\n`;
       });
     }
 
-    // Note et Total
     if (order.note) message += `\n📝 Note : ${order.note}`;
     message += `\n💰 *TOTAL : ${order.total} €*`;
     message += `\n📍 Restaurant : ${order.restaurantName}`;

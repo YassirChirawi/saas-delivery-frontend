@@ -19,6 +19,7 @@ import { RegisterComponent } from './register/register.component';
 import { JoinUsComponent } from './join-us/join-us.component';
 import { HeaderComponent } from './header/header.component';
 import {RouterModule} from "@angular/router";
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import {RouterModule} from "@angular/router";
     LoginComponent,
     RegisterComponent,
     JoinUsComponent,
-    HeaderComponent
+    HeaderComponent,
+    OrderTrackingComponent
   ],
   imports: [
     BrowserModule,

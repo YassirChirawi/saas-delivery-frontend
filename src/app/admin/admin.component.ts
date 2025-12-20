@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
+import { OrderService } from '../services/order.service'; // 👈 IMPORT ORDER SERVICE
 import { Restaurant } from '../models/restaurant.model';
 import { Product } from '../models/product.model';
 import { Router } from '@angular/router';
@@ -12,16 +13,27 @@ import { getAuth } from 'firebase/auth';
   templateUrl: './admin.component.html'
 })
 export class AdminComponent implements OnInit {
+
+  // --- GESTION DES ONGLETS ---
+  viewMode: 'orders' | 'products' = 'orders'; // Par défaut, on affiche les commandes (plus important)
+
+  // --- GESTION PRODUITS ---
   productForm: FormGroup;
-  myRestaurant: Restaurant | null = null;
-  products: Product[] = []; // 👈 LA LISTE DES PRODUITS
+  products: Product[] = [];
   isSubmitting = false;
-  isEditing = false; // 👈 MODE ÉDITION
-  editingProductId: string | null = null; // ID du produit en cours d'édition
+  isEditing = false;
+  editingProductId: string | null = null;
+
+  // --- GESTION COMMANDES ---
+  orders: any[] = []; // 👈 LISTE DES COMMANDES
+
+  // --- INFO RESTO ---
+  myRestaurant: Restaurant | null = null;
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
+    private orderService: OrderService, // 👈 INJECTION
     public auth: AuthService,
     private router: Router
   ) {
@@ -39,7 +51,7 @@ export class AdminComponent implements OnInit {
     const authInstance = getAuth();
     const currentUser = authInstance.currentUser;
 
-    if (!currentUser) return; // AuthGuard gère la redirection
+    if (!currentUser) return;
 
     const profile = await this.auth.getUserProfile(currentUser.uid);
 
@@ -54,15 +66,48 @@ export class AdminComponent implements OnInit {
           if (resto) {
             this.myRestaurant = resto;
             this.productForm.patchValue({ restaurantId: resto.id });
-            // 👇 CHARGER LES PRODUITS DU RESTO
+
+            // 👇 ON CHARGE TOUT
             this.loadProducts(resto.id!);
+            this.loadOrders(resto.id!);
           }
         }
       });
     }
   }
 
-  // 1. CHARGER LES PRODUITS
+  // ==========================================
+  // 👇 PARTIE COMMANDES (DASHBOARD)
+  // ==========================================
+
+  loadOrders(restaurantId: string) {
+    // Abonnement Temps Réel
+    this.orderService.getOrdersByRestaurant(restaurantId).subscribe(data => {
+      this.orders = data;
+    });
+  }
+
+  updateOrderStatus(order: any, status: string) {
+    this.orderService.updateStatus(order.id, status)
+      .then(() => console.log(`Commande #${order.id} passée à ${status}`))
+      .catch(err => console.error(err));
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'CONFIRMED': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'DELIVERING': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'DONE': return 'bg-green-100 text-green-800 border-green-300';
+      case 'REJECTED': return 'bg-red-100 text-red-800 border-red-300';
+      default: return 'bg-gray-100';
+    }
+  }
+
+  // ==========================================
+  // 👇 PARTIE PRODUITS (MENU)
+  // ==========================================
+
   loadProducts(restaurantId: string) {
     this.apiService.getProductsByRestaurant(restaurantId).subscribe({
       next: (data) => {
@@ -71,44 +116,34 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  // 2. SOUMETTRE (Ajout OU Modification)
   onSubmit() {
     if (this.productForm.invalid || !this.myRestaurant) return;
     this.isSubmitting = true;
 
     const productData: Product = this.productForm.value;
-    // On s'assure que le restaurantId est bien celui du resto actuel
     if (this.myRestaurant.id != null) {
       productData.restaurantId = this.myRestaurant.id;
     }
 
     if (this.isEditing && this.editingProductId) {
-      // --- LOGIQUE DE MISE À JOUR ---
-      // NOTE: Il faut ajouter updateProduct dans ApiService (voir étape 3)
-      // Pour l'instant, on va simuler ou tu devras l'ajouter
-      console.log("Mise à jour de :", this.editingProductId);
-      // TODO: Appel API update ici
-      this.isSubmitting = false; // Temporaire
-
+      // TODO: Appeler updateProduct ici quand tu l'auras ajouté dans ApiService
+      console.log("Update non implémenté pour", this.editingProductId);
+      this.isSubmitting = false;
     } else {
-      // --- LOGIQUE D'AJOUT ---
       this.apiService.addProduct(productData).subscribe({
         next: () => {
           this.isSubmitting = false;
           this.resetForm();
-          this.loadProducts(this.myRestaurant!.id!); // Recharger la liste
+          this.loadProducts(this.myRestaurant!.id!);
         },
         error: () => this.isSubmitting = false
       });
     }
   }
 
-  // 3. PRÉPARER L'ÉDITION
   editProduct(product: Product) {
     this.isEditing = true;
-    this.editingProductId = product.id!; // L'ID Firestore
-
-    // Remplir le formulaire avec les données du produit
+    this.editingProductId = product.id!;
     this.productForm.patchValue({
       name: product.name,
       price: product.price,
@@ -117,22 +152,18 @@ export class AdminComponent implements OnInit {
       imageUrl: product.imageUrl,
       restaurantId: product.restaurantId
     });
-
-    // Scroll vers le haut (UX)
+    this.viewMode = 'products'; // Force l'affichage de l'onglet produits
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // 4. ANNULER L'ÉDITION
   cancelEdit() {
     this.resetForm();
   }
 
-  // 5. SUPPRIMER UN PRODUIT
   deleteProduct(id: string) {
-    if(confirm('Voulez-vous vraiment supprimer ce plat ?')) {
-      // NOTE: Il faut ajouter deleteProduct dans ApiService (voir étape 3)
-      console.log("Suppression de :", id);
-      // TODO: Appel API delete ici
+    if(confirm('Supprimer ce plat ?')) {
+      // TODO: Appeler deleteProduct ici quand tu l'auras ajouté dans ApiService
+      console.log("Delete non implémenté pour", id);
     }
   }
 

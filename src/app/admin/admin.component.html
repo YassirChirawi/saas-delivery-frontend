@@ -1,4 +1,25 @@
 <div class="min-h-screen bg-gray-50 p-6">
+  <div class="flex gap-4 mb-6">
+    <button (click)="viewMode = 'orders'"
+            [class.bg-orange-500]="viewMode === 'orders'"
+            [class.text-white]="viewMode === 'orders'"
+            class="px-4 py-2 rounded font-bold border">
+      Commandes ({{ orders.length }})
+    </button>
+
+    <button (click)="viewMode = 'products'"
+            [class.bg-orange-500]="viewMode === 'products'"
+            [class.text-white]="viewMode === 'products'"
+            class="px-4 py-2 rounded font-bold border">
+      Mon Menu
+    </button>
+  </div>
+
+  <div *ngIf="viewMode === 'orders'">
+  </div>
+
+  <div *ngIf="viewMode === 'products'">
+  </div>
 
   <header class="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm">
     <div>

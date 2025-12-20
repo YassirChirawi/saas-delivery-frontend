@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gray-50 flex flex-col items-center p-6 font-sans">
+
+  <div *ngIf="loading" class="mt-20 flex flex-col items-center animate-pulse">
+    <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p class="text-gray-500">Chargement du suivi...</p>
+  </div>
+
+  <div *ngIf="order && !loading" class="w-full max-w-md animate-fade-in">
+
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-extrabold text-gray-900">Suivi de Commande</h1>
+      <p class="text-gray-400 text-sm mt-1">Ref: #{{ order.id | slice:0:8 | uppercase }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8 text-center transition-all duration-500"
+         [class.border-orange-200]="order.status === 'PENDING'"
+         [class.border-blue-200]="order.status === 'CONFIRMED'"
+         [class.border-green-200]="order.status === 'DONE'">
+
+      <div *ngIf="order.status === 'PENDING'">
+        <div class="text-6xl mb-4 animate-bounce">⏳</div>
+        <h2 class="text-xl font-bold text-gray-800">En attente du resto...</h2>
+        <p class="text-gray-500 text-sm mt-2">Le restaurateur a reçu votre commande.</p>
+      </div>
+
+      <div *ngIf="order.status === 'CONFIRMED'">
+        <div class="text-6xl mb-4 animate-pulse">👨‍🍳</div>
+        <h2 class="text-xl font-bold text-blue-600">C'est confirmé !</h2>
+        <p class="text-gray-500 text-sm mt-2">Ça chauffe en cuisine 🔥</p>
+      </div>
+
+      <div *ngIf="order.status === 'DELIVERING'">
+        <div class="text-6xl mb-4">🛵</div>
+        <h2 class="text-xl font-bold text-orange-600">En route / Prêt</h2>
+        <p class="text-gray-500 text-sm mt-2">Votre commande arrive ou est prête.</p>
+      </div>
+
+      <div *ngIf="order.status === 'DONE'">
+        <div class="text-6xl mb-4">✅</div>
+        <h2 class="text-xl font-bold text-green-600">Terminée</h2>
+        <p class="text-gray-500 text-sm mt-2">Merci et bon appétit !</p>
+      </div>
+
+      <div *ngIf="order.status === 'REJECTED'">
+        <div class="text-6xl mb-4">❌</div>
+        <h2 class="text-xl font-bold text-red-600">Commande Refusée</h2>
+        <p class="text-gray-500 text-sm mt-2">Le restaurant ne peut pas prendre votre commande.</p>
+      </div>
+
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+
+      <div class="absolute left-9 top-10 bottom-10 w-0.5 bg-gray-100"></div>
+
+      <div class="absolute left-9 top-10 w-0.5 bg-green-500 transition-all duration-1000"
+           [style.height]="order.status === 'DONE' ? '100%' : (order.status === 'DELIVERING' ? '70%' : (order.status === 'CONFIRMED' ? '40%' : '0%'))">
+      </div>
+
+      <div class="space-y-8 relative">
+        <div *ngFor="let step of steps" class="flex items-start gap-4">
+
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 transition-colors duration-500 border-2"
+               [class.bg-green-500]="isStepActive(step.status)"
+               [class.border-green-500]="isStepActive(step.status)"
+               [class.text-white]="isStepActive(step.status)"
+               [class.bg-white]="!isStepActive(step.status)"
+               [class.border-gray-200]="!isStepActive(step.status)"
+               [class.text-gray-300]="!isStepActive(step.status)">
+            <span *ngIf="isStepActive(step.status)">✓</span>
+            <span *ngIf="!isStepActive(step.status)">•</span>
+          </div>
+
+          <div>
+            <h3 class="font-bold text-sm transition-colors"
+                [class.text-gray-900]="isStepActive(step.status)"
+                [class.text-gray-400]="!isStepActive(step.status)">
+              {{ step.label }}
+            </h3>
+            <p class="text-xs text-gray-400">{{ step.description }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mt-6 text-center">
+      <p class="text-gray-500 text-sm mb-2">Total : <span class="font-bold text-gray-900">{{ order.total }} €</span></p>
+      <a routerLink="/home" class="text-orange-500 font-bold hover:underline text-sm cursor-pointer">
+        Retour à l'accueil
+      </a>
+    </div>
+
+  </div>
+</div>
