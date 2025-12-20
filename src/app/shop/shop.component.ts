@@ -35,6 +35,7 @@ export class ShopComponent implements OnInit {
   currentUser: any = null;
   guestName: string = '';
   guestPhone: string = '';
+  guestAddress: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -161,44 +162,50 @@ export class ShopComponent implements OnInit {
   // --- VALIDATION COMMANDE (WHATSAPP) ---
 
   confirmOrder(type: 'USER' | 'GUEST') {
-    // Validation basique
-    if (type === 'GUEST' && (!this.guestName || !this.guestPhone)) {
-      alert("Merci de remplir votre nom et téléphone !");
+    // 1. Validation de l'Adresse si Livraison
+    if (this.deliveryOption === 'delivery' && !this.guestAddress) {
+      alert("Merci d'indiquer votre adresse de livraison ! 🏠");
       return;
     }
 
-    // Calcul du total final avec livraison
+    // 2. Validation Nom/Tel si Invité
+    if (type === 'GUEST' && (!this.guestName || !this.guestPhone)) {
+      alert("Merci de remplir votre nom et téléphone pour qu'on puisse vous contacter !");
+      return;
+    }
+
     const deliveryCost = this.deliveryOption === 'delivery' ? 2 : 0;
     const finalTotal = this.cartTotal + deliveryCost;
 
-    // Infos Client
     const clientName = type === 'USER' ? (this.currentUser.displayName || this.currentUser.email) : this.guestName;
     const clientPhone = type === 'USER' ? (this.currentUser.phoneNumber || 'Non renseigné') : this.guestPhone;
 
-    // Construction du Message WhatsApp
+    // --- CONSTRUCTION DU MESSAGE ---
     let message = `🛒 *NOUVELLE COMMANDE* (${type === 'USER' ? 'Membre' : 'Invité'})\n`;
     message += `👤 Nom : ${clientName}\n`;
-    message += `📞 Tel : ${clientPhone}\n\n`;
+    message += `📞 Tel : ${clientPhone}\n`;
 
-    message += `📋 *Détail de la commande :*\n`;
+    // Ajout de l'adresse dans le message
+    if (this.deliveryOption === 'delivery') {
+      message += `🏠 *LIVRAISON* : ${this.guestAddress}\n`;
+    } else {
+      message += `🚶 *À EMPORTER*\n`;
+    }
+
+    message += `\n📋 *Détail :*\n`;
     this.cartItems.forEach(item => {
       message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity}€)\n`;
     });
 
-    message += `\n🚚 Mode : ${this.deliveryOption === 'delivery' ? 'Livraison (+2€)' : 'À emporter'}`;
     if (this.orderNote) message += `\n📝 Note : ${this.orderNote}`;
 
-    message += `\n\n💰 *TOTAL À PAYER : ${finalTotal} €*`;
+    message += `\n💰 *TOTAL : ${finalTotal} €*`;
     message += `\n📍 Restaurant : ${this.currentRestaurant.name}`;
 
-    // Numéro du resto (Idéalement this.currentRestaurant.phone, sinon un par défaut)
     const restoPhone = this.currentRestaurant.phoneNumber || "33600000000";
-
-    // Envoi
     const url = `https://wa.me/${restoPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
 
-    // Fin
     this.cartService.clearCart();
     this.closeCheckout();
     this.router.navigate(['/order-tracking']);
