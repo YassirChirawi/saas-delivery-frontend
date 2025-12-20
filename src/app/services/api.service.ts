@@ -5,7 +5,7 @@ import { switchMap, map } from 'rxjs/operators'; // 👈 Ajout des opérateurs R
 import { Product } from '../models/product.model';
 import { Restaurant } from '../models/restaurant.model';
 import { environment } from 'src/environments/environment';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import {getFirestore, doc, updateDoc, onSnapshot} from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -19,6 +19,36 @@ export class ApiService {
   private db = getFirestore(this.app);
 
   constructor(private http: HttpClient) {}
+
+  // ============================================================
+  // 👇 1. SAUVEGARDE ADMIN (Écriture directe Firestore)
+  // ============================================================
+  async updateRestaurantSettings(id: string, data: any): Promise<void> {
+    const restoRef = doc(this.db, 'restaurants', id);
+    // On force la mise à jour, même si le champ n'existait pas avant
+    await updateDoc(restoRef, data);
+  }
+
+  // ============================================================
+  // 👇 2. LECTURE CLIENT (Temps Réel)
+  // ============================================================
+  getRestaurantRealtime(id: string): Observable<any> {
+    return new Observable((observer) => {
+      const docRef = doc(this.db, 'restaurants', id);
+
+      // onSnapshot écoute les changements en direct
+      const unsubscribe = onSnapshot(docRef, (doc) => {
+        if (doc.exists()) {
+          observer.next({ id: doc.id, ...doc.data() });
+        } else {
+          observer.error("Restaurant introuvable");
+        }
+      });
+
+      // Nettoyage quand on quitte la page
+      return () => unsubscribe();
+    });
+  }
 
   // --- PRODUITS ---
 
@@ -147,11 +177,7 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/orders`, orderData, { responseType: 'text' });
   }
 
-  async updateRestaurantSettings(id: string, data: any): Promise<void> {
-    const restoRef = doc(this.db, 'restaurants', id);
-    // On met à jour uniquement les champs envoyés (ex: openingHours) sans écraser le reste
-    await updateDoc(restoRef, data);
-  }
+
 
 
 
