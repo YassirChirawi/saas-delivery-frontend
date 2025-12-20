@@ -5,11 +5,13 @@ import { OrderService } from '../services/order.service';
 @Component({
   selector: 'app-order-tracking',
   templateUrl: './order-tracking.component.html',
+
 })
 export class OrderTrackingComponent implements OnInit {
 
   order: any;
   loading = true;
+  orderReference: string = '';
 
   // Les étapes visuelles de la commande
   steps = [
@@ -25,14 +27,19 @@ export class OrderTrackingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 1. On récupère l'ID dans l'URL (ex: /order-tracking/7dhs8...)
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id) {
-      // 2. Abonnement Temps Réel (Magique !)
       this.orderService.getOrderRealtime(id).subscribe({
         next: (data) => {
           this.order = data;
+
+          // 👇 2. ON FAIT LE SLICE + UPPERCASE ICI EN JAVASCRIPT PUR
+          if (data && data.id) {
+            // Prend les 8 premiers caractères et met en majuscule
+            this.orderReference = data.id.substring(0, 8).toUpperCase();
+          }
+
           this.loading = false;
         },
         error: (err) => {
