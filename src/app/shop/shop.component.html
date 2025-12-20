@@ -20,31 +20,62 @@
     </div>
 
     <div *ngIf="!currentUser">
-      <a routerLink="/login" class="text-sm font-bold text-orange-600">Se connecter</a>
+      <a routerLink="/login" class="text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg">Se connecter</a>
     </div>
 
   </div>
 </div>
+
 <div class="min-h-screen bg-gray-50 font-sans pb-24" *ngIf="currentRestaurant">
 
   <div class="relative h-72 w-full overflow-hidden rounded-b-3xl shadow-lg group">
     <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-         [style.backgroundImage]="'url(' + currentRestaurant.imageUrl + ')'">
+         [style.backgroundImage]="'url(' + (currentRestaurant.imageUrl || 'assets/restaurant-bg.jpg') + ')'">
     </div>
     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-    <div class="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white">
-      <h1 class="text-4xl md:text-5xl font-extrabold mb-2">{{ currentRestaurant.name }}</h1>
+
+    <div class="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white flex flex-col items-start">
+      <h1 class="text-4xl md:text-5xl font-extrabold mb-3">{{ currentRestaurant.name }}</h1>
+
+      <div class="inline-block px-4 py-2 rounded-full text-sm font-bold backdrop-blur-md shadow-lg transition-all duration-500 border border-white/20"
+           [class.bg-green-500]="isRestaurantOpen"
+           [class.text-white]="isRestaurantOpen"
+           [class.bg-red-500]="!isRestaurantOpen"
+           [class.text-white]="!isRestaurantOpen">
+        {{ openingStatusLabel }}
+      </div>
     </div>
   </div>
 
   <div class="max-w-6xl mx-auto px-4 mt-8">
+
+    <div class="relative mb-6 flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+      <button (click)="selectCategory('Tout')"
+              class="px-4 py-2 rounded-full font-bold whitespace-nowrap transition"
+              [class.bg-orange-600]="selectedCategory === 'Tout'"
+              [class.text-white]="selectedCategory === 'Tout'"
+              [class.bg-white]="selectedCategory !== 'Tout'"
+              [class.text-gray-600]="selectedCategory !== 'Tout'">
+        Tout
+      </button>
+      <button *ngFor="let cat of uniqueCategories"
+              (click)="selectCategory(cat)"
+              class="px-4 py-2 rounded-full font-bold whitespace-nowrap transition"
+              [class.bg-orange-600]="selectedCategory === cat"
+              [class.text-white]="selectedCategory === cat"
+              [class.bg-white]="selectedCategory !== cat"
+              [class.text-gray-600]="selectedCategory !== cat">
+        {{ cat }}
+      </button>
+    </div>
+
     <div class="relative mb-6">
-      <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="applyFilters()"
-             class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-4 shadow-sm">
+      <input type="text" placeholder="Rechercher un plat..." [(ngModel)]="searchTerm" (input)="applyFilters()"
+             class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-4 shadow-sm focus:ring-2 focus:ring-orange-500 outline-none">
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let product of displayedProducts" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between">
+      <div *ngFor="let product of displayedProducts" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
         <div>
           <div class="flex justify-between items-start mb-2">
             <h3 class="text-xl font-bold text-gray-800">{{ product.name }}</h3>
@@ -60,14 +91,30 @@
     </div>
   </div>
 
-  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-11/12 max-w-md" *ngIf="cartCount > 0">
+  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-11/12 max-w-md">
     <button (click)="openCheckout()"
-            class="w-full bg-gray-900 text-white rounded-full p-4 shadow-2xl flex justify-between items-center hover:scale-105 transition-transform cursor-pointer">
+            [disabled]="!isRestaurantOpen || cartCount === 0"
+            class="w-full rounded-full p-4 shadow-2xl flex justify-between items-center transition-transform"
+            [class.hover:scale-105]="isRestaurantOpen && cartCount > 0"
+            [class.bg-gray-900]="isRestaurantOpen && cartCount > 0"
+            [class.text-white]="isRestaurantOpen && cartCount > 0"
+            [class.cursor-pointer]="isRestaurantOpen && cartCount > 0"
+
+            [class.bg-gray-400]="!isRestaurantOpen || cartCount === 0"
+            [class.text-gray-200]="!isRestaurantOpen || cartCount === 0"
+            [class.cursor-not-allowed]="!isRestaurantOpen || cartCount === 0">
+
       <div class="flex items-center gap-3">
-        <span class="bg-orange-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">{{ cartCount }}</span>
-        <span class="font-bold">Voir le panier 🛒</span>
+        <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm"
+              [class.bg-orange-600]="isRestaurantOpen && cartCount > 0"
+              [class.bg-gray-500]="!isRestaurantOpen || cartCount === 0">
+              {{ cartCount }}
+        </span>
+        <span class="font-bold" *ngIf="isRestaurantOpen && cartCount > 0">Voir le panier 🛒</span>
+        <span class="font-bold" *ngIf="!isRestaurantOpen">Fermé 🔒</span>
+        <span class="font-bold" *ngIf="isRestaurantOpen && cartCount === 0">Panier vide</span>
       </div>
-      <span class="font-bold text-lg">{{ cartTotal }} €</span>
+      <span class="font-bold text-lg" *ngIf="cartCount > 0">{{ cartTotal }} €</span>
     </button>
   </div>
 
@@ -87,7 +134,6 @@
 
       <div class="space-y-4 mb-8">
         <div *ngFor="let item of cartItems" class="flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
-
           <div class="flex-1">
             <h4 class="font-bold text-gray-800">{{ item.name }}</h4>
             <span class="text-xs text-gray-400">{{ item.price }} € / unité</span>
@@ -131,7 +177,6 @@
       </div>
 
       <div class="space-y-4">
-
         <div>
           <label class="block text-sm font-bold text-gray-700 mb-1">Une remarque ?</label>
           <textarea [(ngModel)]="orderNote" rows="2"
@@ -145,22 +190,11 @@
                  class="w-full bg-white border-2 border-orange-100 rounded-xl p-3 focus:ring-orange-500 outline-none"
                  placeholder="Rue, Étage, Ville...">
         </div>
-
-        <div *ngIf="!currentUser" class="space-y-3 pt-4 border-t border-gray-100">
-          <p class="text-center text-sm font-bold text-gray-400 mb-2">VOS COORDONNÉES</p>
-
-          <input type="text" [(ngModel)]="guestName" placeholder="Votre Nom"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-orange-500 outline-none">
-
-          <input type="tel" [(ngModel)]="guestPhone" placeholder="Votre Téléphone (WhatsApp)"
-                 class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-orange-500 outline-none">
-        </div>
       </div>
 
       <hr class="border-gray-100 my-6">
 
       <div class="text-center">
-
         <div class="mb-4">
           <p class="text-lg">👋 Commande pour <strong>{{ currentUser?.displayName || currentUser?.email }}</strong></p>
           <p class="text-xs text-green-600 font-bold bg-green-50 inline-block px-2 py-1 rounded mt-1">

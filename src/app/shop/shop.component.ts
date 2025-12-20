@@ -1,28 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { CartService, CartItem } from '../services/cart.service';
-import { AuthService } from '../services/auth.service'; // Assure-toi d'avoir ce service
+import { AuthService } from '../services/auth.service';
 import { Product } from '../models/product.model';
 import { OrderService } from '../services/order.service';
 
 @Component({
   selector: 'app-shop',
   templateUrl: './shop.component.html',
-
 })
-export class ShopComponent implements OnInit {
+export class ShopComponent implements OnInit, OnDestroy {
 
   // Données Restaurant & Produits
   currentRestaurant: any;
   allProducts: any[] = [];
   displayedProducts: any[] = [];
+
+  // Filtres
   uniqueCategories: string[] = [];
   selectedCategory: string = 'Tout';
   searchTerm: string = '';
-  isFavorite: boolean = false; // Juste visuel pour l'instant
 
-  // Données Panier (Celles qui manquaient !)
+  // Panier
   cartItems: CartItem[] = [];
   cartCount: number = 0;
   cartTotal: number = 0;
@@ -31,12 +31,15 @@ export class ShopComponent implements OnInit {
   showCheckoutModal: boolean = false;
   deliveryOption: 'pickup' | 'delivery' = 'pickup';
   orderNote: string = '';
+  guestAddress: string = ''; // Adresse si livraison
 
-  // Utilisateur / Invité
+  // Utilisateur
   currentUser: any = null;
-  guestName: string = '';
-  guestPhone: string = '';
-  guestAddress: string = '';
+
+  // Horaires & État
+  isRestaurantOpen = false;
+  openingStatusLabel = 'Chargement...';
+  private timeCheckerInterval: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -45,8 +48,7 @@ export class ShopComponent implements OnInit {
     private cartService: CartService,
     public auth: AuthService,
     private orderService: OrderService
-  ) {
-  }
+  ) {}
 
   ngOnInit(): void {
     // 1. Récupérer l'ID du resto depuis l'URL
@@ -68,16 +70,27 @@ export class ShopComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    if (this.timeCheckerInterval) {
+      clearInterval(this.timeCheckerInterval);
+    }
+  }
+
   loadRestaurantData(id: string) {
+    // Charger les infos du resto
     this.api.getRestaurantById(id).subscribe(data => {
-      this.currentRestaurant = data;
+      this.currentRestaurant = { id, ...data };
+
+      // Lancer la vérification des horaires
+      this.checkOpeningStatus();
+      this.timeCheckerInterval = setInterval(() => this.checkOpeningStatus(), 60000);
     });
 
+    // Charger les produits
     this.api.getProductsByRestaurant(id).subscribe(data => {
       this.allProducts = data;
       this.displayedProducts = data;
-      // Extraire les catégories uniques
-      this.uniqueCategories = [...new Set(data.map(p => p.category))].sort();
+      this.uniqueCategories = [...new Set(data.map((p: any) => p.category))].sort();
     });
   }
 
@@ -86,12 +99,10 @@ export class ShopComponent implements OnInit {
   applyFilters() {
     let temp = this.allProducts;
 
-    // Filtre Catégorie
     if (this.selectedCategory !== 'Tout') {
       temp = temp.filter(p => p.category === this.selectedCategory);
     }
 
-    // Filtre Recherche
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       temp = temp.filter(p => p.name.toLowerCase().includes(term));
@@ -105,34 +116,35 @@ export class ShopComponent implements OnInit {
     this.applyFilters();
   }
 
-  getEmoji(category: string): string {
-    const lower = category.toLowerCase();
-    if (lower.includes('burger')) return '🍔';
-    if (lower.includes('pizza')) return '🍕';
-    if (lower.includes('sushi') || lower.includes('japon')) return '🍣';
-    if (lower.includes('dessert') || lower.includes('sucré')) return '🍰';
-    if (lower.includes('boisson')) return '🥤';
-    return '🍽️';
+  scrollToCategory(category: string) {
+    // Si tu veux scroller, sinon garde ta logique de filtre
+    this.selectedCategory = category;
+    this.applyFilters();
   }
 
-  // --- ACTIONS PANIER (AJOUT / SUPPRESSION) ---
+  // --- ACTIONS PANIER ---
 
   addToCart(product: Product) {
-    // 🔒 SÉCURITÉ : Si pas connecté, on redirige
+    // 🔒 SÉCURITÉ : Si pas connecté, on bloque
     if (!this.currentUser) {
       const wantToLogin = confirm("Vous devez avoir un compte pour commander. Voulez-vous vous connecter ou créer un compte ?");
       if (wantToLogin) {
-        this.router.navigate(['/register']); // Ou '/login'
+        this.router.navigate(['/login']);
       }
-      return; // On arrête tout, on n'ajoute rien au panier
+      return;
     }
 
-    // 👇 LE RESTE DU CODE RESTE PAREIL (Gestion panier, conflit resto...)
-    if (!product.restaurantId && this.currentRestaurant) {
-      product.restaurantId = this.currentRestaurant.id;
+    // Vérification conflit Restaurant
+    if (this.cartItems.length > 0 && this.cartItems[0].restaurantId !== this.currentRestaurant.id) {
+      if (!confirm("Votre panier contient des produits d'un autre restaurant. Vider le panier ?")) {
+        return;
+      }
+      this.cartService.clearCart();
     }
-    const success = this.cartService.addToCart(product);
-    // ...
+
+    // Ajout ID resto
+    const itemToAdd = { ...product, restaurantId: this.currentRestaurant.id };
+    this.cartService.addToCart(itemToAdd);
   }
 
   decreaseQuantity(item: CartItem) {
@@ -146,49 +158,24 @@ export class ShopComponent implements OnInit {
   // --- MODALE & CHECKOUT ---
 
   openCheckout() {
-    this.showCheckoutModal = true;
+    // Sécurité supplémentaire : on n'ouvre pas si fermé
+    if (this.isRestaurantOpen) {
+      this.showCheckoutModal = true;
+    }
   }
 
   closeCheckout() {
     this.showCheckoutModal = false;
   }
 
-  toggleFavorite() {
-    this.isFavorite = !this.isFavorite;
-    // Ici tu peux appeler ton API pour sauvegarder le favori
-  }
-
-  goToRegister() {
-    this.closeCheckout();
-    this.router.navigate(['/register']);
-  }
-
-  formatPhoneForWhatsApp(phone: string): string {
-    if (!phone) return "";
-
-    // 1. On enlève tout ce qui n'est pas un chiffre (espaces, tirets, parenthèses...)
-    let clean = phone.replace(/[^\d]/g, '');
-
-    // 2. Gestion du format français (Si commence par 0, on remplace par 33)
-    if (clean.startsWith('0')) {
-      clean = '33' + clean.substring(1);
-    }
-
-    // 3. Si le numéro commence déjà par 33 (ex: importé depuis un Excel), on laisse tel quel.
-    return clean;
-  }
-
-  // --- VALIDATION COMMANDE (WHATSAPP) ---
+  // --- VALIDATION COMMANDE ---
 
   async confirmOrder() {
-
-    // 1. Validation de l'Adresse si Livraison
     if (this.deliveryOption === 'delivery' && !this.guestAddress) {
       alert("Merci d'indiquer votre adresse de livraison ! 🏠");
       return;
     }
 
-    // 2. Plus besoin de valider le nom/tel invité car on utilise le User connecté
     if (!this.currentUser) {
       alert("Session expirée. Veuillez vous reconnecter.");
       this.router.navigate(['/login']);
@@ -196,18 +183,13 @@ export class ShopComponent implements OnInit {
     }
 
     const finalTotal = this.cartTotal + (this.deliveryOption === 'delivery' ? 2 : 0);
-
-    // 3. On prend les infos DIRECTEMENT depuis le profil connecté
-    // Astuce : Si le user n'a pas mis de tel dans son profil, on peut utiliser celui du formulaire "guestPhone" si tu veux le laisser en secours,
-    // mais le mieux est de prendre celui de l'auth.
     const clientName = this.currentUser.displayName || this.currentUser.email;
-    const clientPhone = this.currentUser.phoneNumber || this.guestPhone || 'Non renseigné';
-    // (Note: tu peux garder les champs inputs dans le HTML pré-remplis si tu veux permettre de changer le tel pour cette commande)
+    const clientPhone = this.currentUser.phoneNumber || 'Non renseigné';
 
     const newOrder = {
       restaurantId: this.currentRestaurant.id,
       restaurantName: this.currentRestaurant.name,
-      userId: this.currentUser.uid, // 👈 LE PLUS IMPORTANT : On lie la commande au compte !
+      userId: this.currentUser.uid,
       clientName: clientName,
       clientPhone: clientPhone,
       clientAddress: this.deliveryOption === 'delivery' ? this.guestAddress : 'Sur place',
@@ -218,15 +200,16 @@ export class ShopComponent implements OnInit {
     };
 
     try {
-      // ... (La suite reste identique : createOrder, message WhatsApp, redirection) ...
       const orderId = await this.orderService.createOrder(newOrder);
       const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
 
+      // Récupération numéro (Priorité WhatsApp)
       const rawPhone = this.currentRestaurant.whatsappPhone ||
         this.currentRestaurant.phoneNumber ||
         this.currentRestaurant.phone;
+
       if (!rawPhone) {
-        alert("Pas de numéro resto");
+        alert("Impossible de commander : Pas de numéro configuré.");
         return;
       }
 
@@ -240,6 +223,52 @@ export class ShopComponent implements OnInit {
 
     } catch (error) {
       console.error("Erreur", error);
+    }
+  }
+
+  // --- UTILITAIRES ---
+
+  formatPhoneForWhatsApp(phone: string): string {
+    if (!phone) return "";
+    let clean = phone.replace(/[^\d]/g, '');
+    if (clean.startsWith('0')) {
+      clean = '33' + clean.substring(1);
+    }
+    return clean;
+  }
+
+  checkOpeningStatus() {
+    if (!this.currentRestaurant || !this.currentRestaurant.openingHours) {
+      this.isRestaurantOpen = true;
+      this.openingStatusLabel = '🟢 Ouvert';
+      return;
+    }
+
+    const now = new Date();
+    const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const todayKey = dayKeys[now.getDay()];
+    const todaySchedule = this.currentRestaurant.openingHours[todayKey];
+
+    if (!todaySchedule || todaySchedule.closed) {
+      this.isRestaurantOpen = false;
+      this.openingStatusLabel = '🔴 Fermé aujourd\'hui';
+      return;
+    }
+
+    const currentHours = now.getHours().toString().padStart(2, '0');
+    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTimeStr = `${currentHours}:${currentMinutes}`;
+
+    if (currentTimeStr >= todaySchedule.open && currentTimeStr < todaySchedule.close) {
+      this.isRestaurantOpen = true;
+      this.openingStatusLabel = `🟢 Ouvert jusqu'à ${todaySchedule.close}`;
+    } else {
+      this.isRestaurantOpen = false;
+      if (currentTimeStr < todaySchedule.open) {
+        this.openingStatusLabel = `🔴 Fermé - Ouvre à ${todaySchedule.open}`;
+      } else {
+        this.openingStatusLabel = `🔴 Fermé depuis ${todaySchedule.close}`;
+      }
     }
   }
 }
