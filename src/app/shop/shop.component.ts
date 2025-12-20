@@ -54,7 +54,18 @@ export class ShopComponent implements OnInit, OnDestroy {
     // 1. Récupérer l'ID du resto depuis l'URL
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.loadRestaurantData(id);
+      this.api.getRestaurantRealtime(id).subscribe(data => {
+        console.log("Mise à jour reçue du resto :", data); // Pour vérifier
+        this.currentRestaurant = data; // Pas besoin de rajouter {id, ...} car le service le fait
+
+        // On revérifie l'ouverture immédiatement dès que les données changent
+        this.checkOpeningStatus();
+
+        // Si le timer n'est pas lancé, on le lance
+        if (!this.timeCheckerInterval) {
+          this.timeCheckerInterval = setInterval(() => this.checkOpeningStatus(), 60000);
+        }
+      });
     }
 
     // 2. Écouter le Panier (Mise à jour temps réel)

@@ -241,14 +241,19 @@ export class AdminComponent implements OnInit {
   }
 
   saveSchedule() {
-    if (!this.myRestaurant?.id) return;
+    if (!this.myRestaurant?.id) {
+      alert("Erreur: ID Restaurant introuvable");
+      return;
+    }
+
+    console.log("Envoi des horaires...", this.schedule); // 👀 Regarde ta console
 
     this.apiService.updateRestaurantSettings(this.myRestaurant.id, {
       openingHours: this.schedule
     }).then(() => {
-      alert("Horaires mis à jour ! 🕒 (Visible immédiatement par les clients)");
+      alert("Horaires sauvegardés ! ✅");
     }).catch(err => {
-      console.error(err);
+      console.error("Erreur Firebase:", err);
       alert("Erreur lors de la sauvegarde.");
     });
   }
