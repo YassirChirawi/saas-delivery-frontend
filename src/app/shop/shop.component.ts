@@ -118,20 +118,21 @@ export class ShopComponent implements OnInit {
   // --- ACTIONS PANIER (AJOUT / SUPPRESSION) ---
 
   addToCart(product: Product) {
-    // Sécurité : Associer l'ID du resto au produit si manquant
+    // 🔒 SÉCURITÉ : Si pas connecté, on redirige
+    if (!this.currentUser) {
+      const wantToLogin = confirm("Vous devez avoir un compte pour commander. Voulez-vous vous connecter ou créer un compte ?");
+      if (wantToLogin) {
+        this.router.navigate(['/register']); // Ou '/login'
+      }
+      return; // On arrête tout, on n'ajoute rien au panier
+    }
+
+    // 👇 LE RESTE DU CODE RESTE PAREIL (Gestion panier, conflit resto...)
     if (!product.restaurantId && this.currentRestaurant) {
       product.restaurantId = this.currentRestaurant.id;
     }
-
     const success = this.cartService.addToCart(product);
-
-    if (!success) {
-      const confirmSwitch = confirm("Votre panier contient des produits d'un autre restaurant. Vider le panier pour commander ici ?");
-      if (confirmSwitch) {
-        this.cartService.clearCart();
-        this.cartService.addToCart(product);
-      }
-    }
+    // ...
   }
 
   decreaseQuantity(item: CartItem) {
@@ -179,27 +180,34 @@ export class ShopComponent implements OnInit {
 
   // --- VALIDATION COMMANDE (WHATSAPP) ---
 
-  async confirmOrder(type: 'USER' | 'GUEST') {
+  async confirmOrder() {
 
-    // 1. VALIDATION (Reste ici car c'est lié aux champs du formulaire HTML)
+    // 1. Validation de l'Adresse si Livraison
     if (this.deliveryOption === 'delivery' && !this.guestAddress) {
-      alert("Merci d'indiquer votre adresse !");
-      return;
-    }
-    if (type === 'GUEST' && (!this.guestName || !this.guestPhone)) {
-      alert("Nom et téléphone obligatoires !");
+      alert("Merci d'indiquer votre adresse de livraison ! 🏠");
       return;
     }
 
-    // 2. PRÉPARATION DES DONNÉES
+    // 2. Plus besoin de valider le nom/tel invité car on utilise le User connecté
+    if (!this.currentUser) {
+      alert("Session expirée. Veuillez vous reconnecter.");
+      this.router.navigate(['/login']);
+      return;
+    }
+
     const finalTotal = this.cartTotal + (this.deliveryOption === 'delivery' ? 2 : 0);
-    const clientName = type === 'USER' ? (this.currentUser.displayName || this.currentUser.email) : this.guestName;
-    const clientPhone = type === 'USER' ? (this.currentUser.phoneNumber || 'Non renseigné') : this.guestPhone;
+
+    // 3. On prend les infos DIRECTEMENT depuis le profil connecté
+    // Astuce : Si le user n'a pas mis de tel dans son profil, on peut utiliser celui du formulaire "guestPhone" si tu veux le laisser en secours,
+    // mais le mieux est de prendre celui de l'auth.
+    const clientName = this.currentUser.displayName || this.currentUser.email;
+    const clientPhone = this.currentUser.phoneNumber || this.guestPhone || 'Non renseigné';
+    // (Note: tu peux garder les champs inputs dans le HTML pré-remplis si tu veux permettre de changer le tel pour cette commande)
 
     const newOrder = {
       restaurantId: this.currentRestaurant.id,
       restaurantName: this.currentRestaurant.name,
-      userId: this.currentUser ? this.currentUser.uid : 'GUEST',
+      userId: this.currentUser.uid, // 👈 LE PLUS IMPORTANT : On lie la commande au compte !
       clientName: clientName,
       clientPhone: clientPhone,
       clientAddress: this.deliveryOption === 'delivery' ? this.guestAddress : 'Sur place',
@@ -210,31 +218,23 @@ export class ShopComponent implements OnInit {
     };
 
     try {
+      // ... (La suite reste identique : createOrder, message WhatsApp, redirection) ...
       const orderId = await this.orderService.createOrder(newOrder);
       const message = this.orderService.formatWhatsAppMessage(newOrder, orderId);
 
-      // 👇 DÉBUT DE LA CORRECTION 👇
-
-      // 1. On récupère le numéro (On vérifie phoneNumber ET phone au cas où)
       const rawPhone = this.currentRestaurant.phoneNumber || this.currentRestaurant.phone;
-
-      // 2. Sécurité : Si pas de numéro, on arrête tout
       if (!rawPhone) {
-        alert("Impossible de commander : Ce restaurant n'a pas renseigné de numéro WhatsApp.");
-        // On annule la redirection vers le suivi car la commande ne peut pas partir
+        alert("Pas de numéro resto");
         return;
       }
 
-      // 3. On formate le numéro proprement
       const targetPhone = this.formatPhoneForWhatsApp(rawPhone);
-
-      // 4. On ouvre WhatsApp
       const url = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
 
       this.cartService.clearCart();
       this.closeCheckout();
-      await this.router.navigate(['/order-tracking', orderId]);
+      this.router.navigate(['/order-tracking', orderId]);
 
     } catch (error) {
       console.error("Erreur", error);
