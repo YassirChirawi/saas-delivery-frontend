@@ -1,3 +1,30 @@
+<div class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+
+    <div class="font-bold text-lg text-gray-800 truncate max-w-[50%]">
+      {{ currentRestaurant?.name || 'Restaurant' }}
+    </div>
+
+    <div class="flex items-center gap-3" *ngIf="currentUser">
+
+      <button (click)="auth.logout()" class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded hover:bg-red-100">
+        Déco
+      </button>
+
+      <button routerLink="/my-account" class="p-2 rounded-lg bg-gray-100 hover:bg-orange-100 text-gray-700 hover:text-orange-600 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+    </div>
+
+    <div *ngIf="!currentUser">
+      <a routerLink="/login" class="text-sm font-bold text-orange-600">Se connecter</a>
+    </div>
+
+  </div>
+</div>
 <div class="min-h-screen bg-gray-50 font-sans pb-24" *ngIf="currentRestaurant">
 
   <div class="relative h-72 w-full overflow-hidden rounded-b-3xl shadow-lg group">
