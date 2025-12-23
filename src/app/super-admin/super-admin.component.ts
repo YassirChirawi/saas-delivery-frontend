@@ -163,6 +163,10 @@ export class SuperAdminComponent implements OnInit {
     }
   }
 
+  manageRestaurant(resto: Restaurant) {
+    this.router.navigate(['/admin'], { queryParams: { impersonate: resto.id } });
+  }
+
   logout() {
     this.auth.logout();
   }

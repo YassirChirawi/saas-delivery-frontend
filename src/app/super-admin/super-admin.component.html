@@ -71,9 +71,12 @@
                 </span>
               </div>
             </div>
-            <div class="mt-5 border-t border-gray-50 pt-4">
-              <button (click)="deleteRestaurant(resto.id!)" class="text-red-400 hover:text-red-600 text-xs font-bold transition flex items-center gap-1 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg w-full justify-center">
-                🗑️ Supprimer
+            <div class="mt-5 border-t border-gray-50 pt-4 flex gap-2">
+              <button (click)="manageRestaurant(resto)" class="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-black transition shadow-lg flex items-center justify-center gap-2">
+                🛠️ Gérer
+              </button>
+              <button (click)="deleteRestaurant(resto.id!)" class="text-red-400 hover:text-red-600 text-xs font-bold transition flex items-center justify-center bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg">
+                🗑️
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { AuthService, UserRole } from '../services/auth.service';
 import { OrderService } from '../services/order.service';
@@ -54,7 +55,8 @@ export class AdminComponent implements OnInit {
     private apiService: ApiService,
     private orderService: OrderService,
     public auth: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute // ✅ Injection de ActivatedRoute
   ) {
     this.productForm = this.fb.group({
       name: ['', Validators.required],
@@ -75,33 +77,53 @@ export class AdminComponent implements OnInit {
     // 1. Récupérer le profil utilisateur
     const profile = await this.auth.getUserProfile(currentUser.uid);
 
-    // Sécurité : Redirection si Super Admin
+    // 2. Logique Super Admin (Impersonation)
+    const impersonatedId = this.route.snapshot.queryParams['impersonate'];
+
     if (profile && profile.role === UserRole.SUPER_ADMIN) {
-      this.router.navigate(['/super-admin']);
-      return;
+      if (impersonatedId) {
+        console.log("🕵️ SUPER ADMIN MODE : Gestion du restaurant", impersonatedId);
+        // On charge LE restaurant demandé
+        this.loadRestaurantById(impersonatedId);
+        return;
+      } else {
+        // Pas d'impersonation -> On retourne au Dashboard Super Admin
+        this.router.navigate(['/super-admin']);
+        return;
+      }
     }
 
-    // 2. Récupérer le Restaurant
-    // ✅ CORRECTION : Fusion de la logique ici. On utilise profile.email.
+    // 3. Logique Restaurateur Normal
     if (profile && profile.email) {
       this.apiService.getRestaurantByEmail(profile.email).subscribe({
         next: (resto) => {
           if (resto) {
-            this.myRestaurant = resto;
-
-            // Pré-remplir le formulaire produit
-            this.productForm.patchValue({ restaurantId: resto.id });
-
-            // Initialiser les horaires
-            this.initSchedule(resto);
-
-            // Charger les données
-            this.loadProducts(resto.id!);
-            this.loadOrders(resto.id!);
+            this.setupRestaurant(resto);
           }
         }
       });
     }
+  }
+
+  // Factorisation de la logique de chargement
+  loadRestaurantById(id: string) {
+    this.apiService.getRestaurantById(id).subscribe(resto => {
+      if (resto) this.setupRestaurant(resto);
+    });
+  }
+
+  setupRestaurant(resto: Restaurant) {
+    this.myRestaurant = resto;
+
+    // Pré-remplir le formulaire produit
+    this.productForm.patchValue({ restaurantId: resto.id });
+
+    // Initialiser les horaires
+    this.initSchedule(resto);
+
+    // Charger les données
+    this.loadProducts(resto.id!);
+    this.loadOrders(resto.id!);
   }
 
   // ==========================================
@@ -203,7 +225,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteProduct(id: string) {
-    if(confirm('Supprimer ce plat ?')) {
+    if (confirm('Supprimer ce plat ?')) {
       // TODO: Implémenter deleteProduct dans ApiService
       console.log("Delete non implémenté pour", id);
     }
