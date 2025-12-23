@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
 
-declare var google: any;
+
 
 import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
