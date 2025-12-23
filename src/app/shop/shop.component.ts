@@ -1,4 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
+
+declare var google: any;
+
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
 import { CartService, CartItem } from '../services/cart.service';
@@ -10,7 +13,9 @@ import { OrderService } from '../services/order.service';
   selector: 'app-shop',
   templateUrl: './shop.component.html',
 })
-export class ShopComponent implements OnInit, OnDestroy {
+export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('addressInput') addressInput!: ElementRef;
+
 
   // Données Restaurant & Produits
   currentRestaurant: any;
@@ -47,8 +52,9 @@ export class ShopComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private cartService: CartService,
     public auth: AuthService,
-    private orderService: OrderService
-  ) {}
+    private orderService: OrderService,
+    private ngZone: NgZone
+  ) { }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -86,6 +92,41 @@ export class ShopComponent implements OnInit, OnDestroy {
       clearInterval(this.timeCheckerInterval);
     }
   }
+
+  ngAfterViewInit(): void {
+    // Initialiser l'autocomplete si l'input est déjà présent (ex: rechargement)
+    if (this.showCheckoutModal && this.deliveryOption === 'delivery') {
+      setTimeout(() => this.initAutocomplete(), 500);
+    }
+  }
+
+  initAutocomplete() {
+    if (!this.addressInput) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(this.addressInput.nativeElement, {
+      types: ['address'],
+      componentRestrictions: { country: 'fr' } // Adapter si besoin (ex: 'ma', 'dz', 'tn')
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      this.ngZone.run(() => {
+        const place: google.maps.places.PlaceResult = autocomplete.getPlace();
+        if (place.geometry && place.formatted_address) {
+          this.guestAddress = place.formatted_address;
+        } else {
+          this.guestAddress = this.addressInput.nativeElement.value;
+        }
+      });
+    });
+  }
+
+  // Hook pour ré-initialiser l'autocomplete quand on bascule sur "Livraison"
+  watchDeliveryOption() {
+    if (this.deliveryOption === 'delivery') {
+      setTimeout(() => this.initAutocomplete(), 200);
+    }
+  }
+
 
   // 👇 NOUVELLE MÉTHODE POUR CHARGER LES PRODUITS CORRECTEMENT
   loadProducts(restaurantId: string) {
@@ -133,7 +174,7 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   addToCart(product: Product) {
     if (!this.currentUser) {
-      if(confirm("Vous devez avoir un compte pour commander. Se connecter ?")) {
+      if (confirm("Vous devez avoir un compte pour commander. Se connecter ?")) {
         this.router.navigate(['/login']);
       }
       return;
@@ -158,8 +199,20 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   // --- MODALE & CHECKOUT ---
 
+  deliveryOptionChanged() {
+    if (this.deliveryOption === 'delivery') {
+      setTimeout(() => this.initAutocomplete(), 100);
+    }
+  }
+
   openCheckout() {
-    if (this.isRestaurantOpen) this.showCheckoutModal = true;
+    if (this.isRestaurantOpen) {
+      this.showCheckoutModal = true;
+      // Si déjà en livraison par défaut
+      if (this.deliveryOption === 'delivery') {
+        setTimeout(() => this.initAutocomplete(), 100);
+      }
+    }
   }
 
   closeCheckout() {
@@ -234,7 +287,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const currentStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    const currentStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     if (currentStr >= todaySchedule.open && currentStr < todaySchedule.close) {
       this.isRestaurantOpen = true;
       this.openingStatusLabel = `🟢 Ouvert jusqu'à ${todaySchedule.close}`;

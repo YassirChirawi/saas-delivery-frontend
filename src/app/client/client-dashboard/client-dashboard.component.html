@@ -13,142 +13,134 @@
 
     <div class="flex gap-3 mt-6 overflow-x-auto pb-2 no-scrollbar">
 
-      <button (click)="activeTab = 'history'"
-              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
-              [class.bg-orange-500]="activeTab === 'history'"
-              [class.text-white]="activeTab === 'history'"
-              [class.border-orange-500]="activeTab === 'history'"
-              [class.shadow-md]="activeTab === 'history'"
-              [class.transform]="activeTab === 'history'"
-              [class.scale-105]="activeTab === 'history'"
-
-              [class.bg-white]="activeTab !== 'history'"
-              [class.text-gray-600]="activeTab !== 'history'"
-              [class.border-gray-200]="activeTab !== 'history'"
-              [class.hover:bg-orange-50]="activeTab !== 'history'"
-              [class.hover:text-orange-600]="activeTab !== 'history'"
-              [class.hover:border-orange-200]="activeTab !== 'history'">
+      <button (click)="setTab('history')"
+        class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
+        [class.bg-orange-500]="activeTab === 'history'" [class.text-white]="activeTab === 'history'"
+        [class.border-orange-500]="activeTab === 'history'" [class.shadow-md]="activeTab === 'history'"
+        [class.transform]="activeTab === 'history'" [class.scale-105]="activeTab === 'history'"
+        [class.bg-white]="activeTab !== 'history'" [class.text-gray-600]="activeTab !== 'history'"
+        [class.border-gray-200]="activeTab !== 'history'" [class.hover:bg-orange-50]="activeTab !== 'history'"
+        [class.hover:text-orange-600]="activeTab !== 'history'"
+        [class.hover:border-orange-200]="activeTab !== 'history'">
         <span>🕒</span> Historique
       </button>
 
-      <button (click)="activeTab = 'profile'"
-              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
-              [class.bg-orange-500]="activeTab === 'profile'"
-              [class.text-white]="activeTab === 'profile'"
-              [class.border-orange-500]="activeTab === 'profile'"
-              [class.shadow-md]="activeTab === 'profile'"
-              [class.transform]="activeTab === 'profile'"
-              [class.scale-105]="activeTab === 'profile'"
-
-              [class.bg-white]="activeTab !== 'profile'"
-              [class.text-gray-600]="activeTab !== 'profile'"
-              [class.border-gray-200]="activeTab !== 'profile'"
-              [class.hover:bg-orange-50]="activeTab !== 'profile'"
-              [class.hover:text-orange-600]="activeTab !== 'profile'"
-              [class.hover:border-orange-200]="activeTab !== 'profile'">
+      <button (click)="setTab('profile')"
+        class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
+        [class.bg-orange-500]="activeTab === 'profile'" [class.text-white]="activeTab === 'profile'"
+        [class.border-orange-500]="activeTab === 'profile'" [class.shadow-md]="activeTab === 'profile'"
+        [class.transform]="activeTab === 'profile'" [class.scale-105]="activeTab === 'profile'"
+        [class.bg-white]="activeTab !== 'profile'" [class.text-gray-600]="activeTab !== 'profile'"
+        [class.border-gray-200]="activeTab !== 'profile'" [class.hover:bg-orange-50]="activeTab !== 'profile'"
+        [class.hover:text-orange-600]="activeTab !== 'profile'"
+        [class.hover:border-orange-200]="activeTab !== 'profile'">
         <span>👤</span> Mes Infos
       </button>
 
-      <button (click)="activeTab = 'support'"
-              class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
-              [class.bg-orange-500]="activeTab === 'support'"
-              [class.text-white]="activeTab === 'support'"
-              [class.border-orange-500]="activeTab === 'support'"
-              [class.shadow-md]="activeTab === 'support'"
-              [class.transform]="activeTab === 'support'"
-              [class.scale-105]="activeTab === 'support'"
-
-              [class.bg-white]="activeTab !== 'support'"
-              [class.text-gray-600]="activeTab !== 'support'"
-              [class.border-gray-200]="activeTab !== 'support'"
-              [class.hover:bg-orange-50]="activeTab !== 'support'"
-              [class.hover:text-orange-600]="activeTab !== 'support'"
-              [class.hover:border-orange-200]="activeTab !== 'support'">
+      <button (click)="setTab('support')"
+        class="px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 border flex items-center gap-2 whitespace-nowrap"
+        [class.bg-orange-500]="activeTab === 'support'" [class.text-white]="activeTab === 'support'"
+        [class.border-orange-500]="activeTab === 'support'" [class.shadow-md]="activeTab === 'support'"
+        [class.transform]="activeTab === 'support'" [class.scale-105]="activeTab === 'support'"
+        [class.bg-white]="activeTab !== 'support'" [class.text-gray-600]="activeTab !== 'support'"
+        [class.border-gray-200]="activeTab !== 'support'" [class.hover:bg-orange-50]="activeTab !== 'support'"
+        [class.hover:text-orange-600]="activeTab !== 'support'"
+        [class.hover:border-orange-200]="activeTab !== 'support'">
         <span>🆘</span> Support
       </button>
 
     </div>
 
-  <div class="px-4 container mx-auto max-w-lg">
+    <div class="px-4 container mx-auto max-w-lg">
 
-    <div *ngIf="activeTab === 'history'" class="space-y-4 animate-fade-in">
+      <div *ngIf="activeTab === 'history'" class="space-y-4 animate-fade-in">
 
-      <div *ngIf="orders.length === 0" class="text-center py-10 text-gray-400">
-        <div class="text-5xl mb-2">🍽️</div>
-        <p>Pas encore de commande.</p>
-        <a routerLink="/home" class="text-orange-500 font-bold mt-2 inline-block">Commander maintenant</a>
+        <div *ngIf="orders.length === 0" class="text-center py-10 text-gray-400">
+          <div class="text-5xl mb-2">🍽️</div>
+          <p>Pas encore de commande.</p>
+          <a routerLink="/home" class="text-orange-500 font-bold mt-2 inline-block">Commander maintenant</a>
+        </div>
+
+        <div *ngFor="let order of orders" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide"
+                [ngClass]="getStatusColor(order.status)">
+                {{ getStatusLabel(order.status) }}
+              </span>
+              <p class="text-gray-400 text-xs mt-2">{{ formatDate(order.createdAtTimestamp) }}</p>
+            </div>
+            <div class="text-right">
+              <span class="block font-bold text-lg text-gray-800">{{ order.total }} €</span>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 my-2 pt-2">
+            <p class="font-bold text-sm text-gray-700">{{ order.restaurantName }}</p>
+            <p class="text-xs text-gray-500 line-clamp-1">
+              <span *ngFor="let item of order.items; let last = last">
+                {{ item.quantity }}x {{ item.name }}<span *ngIf="!last">, </span>
+              </span>
+            </p>
+          </div>
+
+          <button [routerLink]="['/order-tracking', order.id]"
+            class="w-full mt-2 bg-gray-50 text-gray-600 font-bold py-2 rounded text-sm hover:bg-gray-100">
+            Voir le suivi >
+          </button>
+        </div>
       </div>
 
-      <div *ngFor="let order of orders" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex justify-between items-start mb-2">
+
+      <div *ngIf="activeTab === 'profile'"
+        class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
+        <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="space-y-4">
+
           <div>
-            <span class="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide" [ngClass]="getStatusColor(order.status)">
-              {{ getStatusLabel(order.status) }}
-            </span>
-            <p class="text-gray-400 text-xs mt-2">{{ formatDate(order.createdAtTimestamp) }}</p>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Nom complet</label>
+            <input formControlName="displayName" type="text"
+              class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
           </div>
-          <div class="text-right">
-            <span class="block font-bold text-lg text-gray-800">{{ order.total }} €</span>
+
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Téléphone</label>
+            <input formControlName="phone" type="tel"
+              class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
           </div>
-        </div>
 
-        <div class="border-t border-gray-100 my-2 pt-2">
-          <p class="font-bold text-sm text-gray-700">{{ order.restaurantName }}</p>
-          <p class="text-xs text-gray-500 line-clamp-1">
-            <span *ngFor="let item of order.items; let last = last">
-              {{ item.quantity }}x {{ item.name }}<span *ngIf="!last">, </span>
-            </span>
-          </p>
-        </div>
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Adresse par défaut</label>
+            <textarea #addressInput formControlName="address" rows="3"
+              class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Pour gagner du temps..."></textarea>
+          </div>
 
-        <button [routerLink]="['/order-tracking', order.id]" class="w-full mt-2 bg-gray-50 text-gray-600 font-bold py-2 rounded text-sm hover:bg-gray-100">
-          Voir le suivi >
-        </button>
+          <button type="submit" [disabled]="isUpdating"
+            class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition shadow-lg">
+            {{ isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          </button>
+
+        </form>
       </div>
-    </div>
 
 
-    <div *ngIf="activeTab === 'profile'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 animate-fade-in">
-      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="space-y-4">
+      <div *ngIf="activeTab === 'support'" class="text-center animate-fade-in">
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+          <div class="text-6xl mb-4">🛟</div>
+          <h2 class="text-xl font-bold text-gray-800 mb-2">Besoin d'aide ?</h2>
+          <p class="text-gray-500 mb-6 text-sm">Un problème avec une commande ? Une question sur l'application ?</p>
 
-        <div>
-          <label class="block text-sm font-bold text-gray-700 mb-1">Nom complet</label>
-          <input formControlName="displayName" type="text" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
+          <a href="https://wa.me/33612345678" target="_blank"
+            class="block w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg mb-3 flex items-center justify-center gap-2">
+            <span>Contacter le Support WhatsApp</span>
+          </a>
+
+          <a href="mailto:support@mabouffe.com"
+            class="block w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">
+            Envoyer un Email
+          </a>
         </div>
-
-        <div>
-          <label class="block text-sm font-bold text-gray-700 mb-1">Téléphone</label>
-          <input formControlName="phone" type="tel" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500">
-        </div>
-
-        <div>
-          <label class="block text-sm font-bold text-gray-700 mb-1">Adresse par défaut</label>
-          <textarea formControlName="address" rows="3" class="w-full p-3 bg-gray-50 rounded-lg border-none focus:ring-2 focus:ring-orange-500" placeholder="Pour gagner du temps..."></textarea>
-        </div>
-
-        <button type="submit" [disabled]="isUpdating" class="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700 transition shadow-lg">
-          {{ isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications' }}
-        </button>
-
-      </form>
-    </div>
-
-
-    <div *ngIf="activeTab === 'support'" class="text-center animate-fade-in">
-      <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <div class="text-6xl mb-4">🛟</div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">Besoin d'aide ?</h2>
-        <p class="text-gray-500 mb-6 text-sm">Un problème avec une commande ? Une question sur l'application ?</p>
-
-        <a href="https://wa.me/33612345678" target="_blank" class="block w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 shadow-lg mb-3 flex items-center justify-center gap-2">
-          <span>Contacter le Support WhatsApp</span>
-        </a>
-
-        <a href="mailto:support@mabouffe.com" class="block w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">
-          Envoyer un Email
-        </a>
       </div>
-    </div>
 
+    </div>
   </div>
-</div>

@@ -1,4 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, NgZone } from '@angular/core';
+
+declare var google: any;
+
 import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { Router } from '@angular/router';
@@ -8,7 +11,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
   selector: 'app-client-dashboard',
   templateUrl: './client-dashboard.component.html',
 })
-export class ClientDashboardComponent implements OnInit {
+export class ClientDashboardComponent implements OnInit, AfterViewInit {
+  @ViewChild('addressInput') addressInput!: ElementRef;
+
 
   activeTab: 'history' | 'profile' | 'support' = 'history';
   orders: any[] = [];
@@ -20,7 +25,8 @@ export class ClientDashboardComponent implements OnInit {
     public auth: AuthService,
     private orderService: OrderService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {
     this.profileForm = this.fb.group({
       displayName: ['', Validators.required],
@@ -54,7 +60,39 @@ export class ClientDashboardComponent implements OnInit {
     }
   }
 
-  // Mettre à jour le profil
+  ngAfterViewInit(): void {
+    // On attend un peu que le DOM soit prêt si l'onglet 'profile' n'est pas par défaut (ici il l'est pas, mais au cas où)
+    // Mais ici l'onglet par défaut est 'history', donc le champ n'existe pas encore.
+  }
+
+  // Quand on change d'onglet, on check si on doit init l'autocomplete
+  setTab(tab: 'history' | 'profile' | 'support') {
+    this.activeTab = tab;
+    if (tab === 'profile') {
+      setTimeout(() => this.initAutocomplete(), 200);
+    }
+  }
+
+  initAutocomplete() {
+    if (!this.addressInput) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(this.addressInput.nativeElement, {
+      types: ['address'],
+      componentRestrictions: { country: 'fr' }
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      this.ngZone.run(() => {
+        const place: google.maps.places.PlaceResult = autocomplete.getPlace();
+        if (place.geometry && place.formatted_address) {
+          this.profileForm.patchValue({ address: place.formatted_address });
+        } else {
+          this.profileForm.patchValue({ address: this.addressInput.nativeElement.value });
+        }
+      });
+    });
+  }
+
   async updateProfile() {
     if (this.profileForm.invalid) return;
     this.isUpdating = true;
@@ -81,7 +119,7 @@ export class ClientDashboardComponent implements OnInit {
   // Helpers pour l'affichage (Date et Statut)
   formatDate(timestamp: number): string {
     if (!timestamp) return '';
-    return new Date(timestamp).toLocaleDateString() + ' ' + new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    return new Date(timestamp).toLocaleDateString() + ' ' + new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   getStatusLabel(status: string): string {
