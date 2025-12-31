@@ -1,36 +1,25 @@
 <div class="container mx-auto px-4 py-8">
 
   <div class="mb-6 relative">
-    <input
-      type="text"
-      [(ngModel)]="searchTerm"
-      (input)="onSearchChange()"
+    <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()"
       placeholder="🍔 Chercher un plat, un resto..."
-      class="w-full p-4 pl-12 rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
-    >
+      class="w-full p-4 pl-12 rounded-2xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-orange-500 outline-none transition">
     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-xl">🔍</span>
   </div>
 
   <div class="flex gap-3 overflow-x-auto pb-4 mb-6 no-scrollbar">
-    <button
-      (click)="selectCategory('')"
+    <button (click)="selectCategory('')"
       class="px-5 py-2 rounded-full font-bold whitespace-nowrap transition-all duration-200 border"
-      [class.bg-gray-900]="selectedCategory === ''"
-      [class.text-white]="selectedCategory === ''"
-      [class.bg-white]="selectedCategory !== ''"
-      [class.text-gray-600]="selectedCategory !== ''">
+      [class.bg-gray-900]="selectedCategory === ''" [class.text-white]="selectedCategory === ''"
+      [class.bg-white]="selectedCategory !== ''" [class.text-gray-600]="selectedCategory !== ''">
       Tout
     </button>
 
-    <button *ngFor="let cat of categories"
-            (click)="selectCategory(cat)"
-            class="px-5 py-2 rounded-full font-bold whitespace-nowrap border transition-all duration-200 shadow-sm hover:shadow-md"
-            [class.bg-orange-500]="selectedCategory === cat"
-            [class.text-white]="selectedCategory === cat"
-            [class.border-orange-500]="selectedCategory === cat"
-            [class.bg-white]="selectedCategory !== cat"
-            [class.text-gray-700]="selectedCategory !== cat"
-            [class.border-gray-200]="selectedCategory !== cat">
+    <button *ngFor="let cat of categories" (click)="selectCategory(cat)"
+      class="px-5 py-2 rounded-full font-bold whitespace-nowrap border transition-all duration-200 shadow-sm hover:shadow-md"
+      [class.bg-orange-500]="selectedCategory === cat" [class.text-white]="selectedCategory === cat"
+      [class.border-orange-500]="selectedCategory === cat" [class.bg-white]="selectedCategory !== cat"
+      [class.text-gray-700]="selectedCategory !== cat" [class.border-gray-200]="selectedCategory !== cat">
       {{ cat }}
     </button>
   </div>
@@ -38,26 +27,26 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-    <div *ngFor="let resto of filteredRestaurants"
-         (click)="goToShop(resto.id)"
-         class="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative">
+    <div *ngFor="let resto of filteredRestaurants" (click)="goToShop(resto.id)"
+      class="group bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative">
 
-      <div class="h-56 bg-gray-200 bg-cover bg-center relative transition-all duration-500"
-           [class.grayscale]="!isRestoOpen(resto)"
-           [style.backgroundImage]="'url(' + (resto.imageUrl || 'assets/restaurant-bg.jpg') + ')'">
+      <div class="h-40 md:h-56 bg-gray-200 bg-cover bg-center relative transition-all duration-500"
+        [class.grayscale]="!isRestoOpen(resto)"
+        [style.backgroundImage]="'url(' + (resto.imageUrl || 'assets/restaurant-bg.jpg') + ')'">
 
         <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition"></div>
 
-        <div class="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md border border-white/20"
-             [class.bg-green-500]="isRestoOpen(resto)"
-             [class.text-white]="isRestoOpen(resto)"
-             [class.bg-black]="!isRestoOpen(resto)"
-             [class.text-white]="!isRestoOpen(resto)">
+        <div
+          class="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md border border-white/20"
+          [class.bg-green-500]="isRestoOpen(resto)" [class.text-white]="isRestoOpen(resto)"
+          [class.bg-black]="!isRestoOpen(resto)" [class.text-white]="!isRestoOpen(resto)">
           {{ getStatusLabel(resto) }}
         </div>
 
-        <div *ngIf="!isRestoOpen(resto)" class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
-          <span class="text-white font-bold border-2 border-white px-4 py-1 rounded uppercase tracking-widest text-sm mb-1">
+        <div *ngIf="!isRestoOpen(resto)"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <span
+            class="text-white font-bold border-2 border-white px-4 py-1 rounded uppercase tracking-widest text-sm mb-1">
             Fermé
           </span>
         </div>
@@ -65,7 +54,8 @@
 
       <div class="p-6">
         <div class="flex justify-between items-start mb-2">
-          <h3 class="text-xl font-extrabold text-gray-900 group-hover:text-orange-600 transition-colors">{{ resto.name }}</h3>
+          <h3 class="text-xl font-extrabold text-gray-900 group-hover:text-orange-600 transition-colors">{{ resto.name
+            }}</h3>
         </div>
 
         <p class="text-gray-500 text-sm line-clamp-2 mb-4">
@@ -73,7 +63,8 @@
         </p>
 
         <div class="flex flex-wrap gap-2 mt-2">
-          <span *ngFor="let tag of resto.tags.slice(0, 3)" class="text-xs bg-gray-50 text-gray-500 border border-gray-100 px-2 py-1 rounded-lg">
+          <span *ngFor="let tag of resto.tags.slice(0, 3)"
+            class="text-xs bg-gray-50 text-gray-500 border border-gray-100 px-2 py-1 rounded-lg">
             {{ tag | titlecase }}
           </span>
           <span *ngIf="resto.tags.length > 3" class="text-xs text-gray-400 py-1">+{{ resto.tags.length - 3 }}</span>

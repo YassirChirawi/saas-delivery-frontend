@@ -12,8 +12,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = 'http://localhost:8080/api/v1/orders'; // Adjust based on actual base URL if needed
-  private promoUrl = 'http://localhost:8080/api/v1/promo-codes';
+  private apiUrl = `${environment.apiUrl}/orders`;
+  private promoUrl = `${environment.apiUrl}/promo-codes`;
   private db: Firestore;
 
   constructor(private http: HttpClient) {

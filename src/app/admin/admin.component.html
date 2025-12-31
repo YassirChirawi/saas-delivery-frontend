@@ -2,47 +2,47 @@
 
   <div class="bg-white shadow-sm mb-6">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold text-gray-800">
-        Dashboard Admin 🛠️
-        <span *ngIf="myRestaurant" class="text-sm font-normal text-gray-500">
-          - {{ myRestaurant.name }}
-        </span>
-      </h1>
+      <div class="flex items-center gap-2">
+        <button routerLink="/" class="text-gray-500 hover:text-orange-600 transition p-1" title="Retour accueil">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </button>
+        <h1 class="text-xl font-bold text-gray-800">
+          Dashboard Admin
+          <span *ngIf="myRestaurant" class="block md:inline text-sm font-normal text-gray-500">
+            {{ myRestaurant.name }}
+          </span>
+        </h1>
+      </div>
       <button (click)="logout()" class="text-red-500 font-bold hover:underline text-sm">
         Déconnexion
       </button>
     </div>
 
-    <div class="container mx-auto px-4 flex gap-6 border-b border-gray-100 overflow-x-auto">
+    <div class="container mx-auto px-4 flex gap-6 border-b border-gray-100 overflow-x-auto no-scrollbar">
 
       <button (click)="viewMode = 'orders'"
-              class="pb-3 border-b-2 font-bold transition-colors flex items-center gap-2 whitespace-nowrap"
-              [class.border-orange-500]="viewMode === 'orders'"
-              [class.text-orange-600]="viewMode === 'orders'"
-              [class.border-transparent]="viewMode !== 'orders'"
-              [class.text-gray-400]="viewMode !== 'orders'">
+        class="pb-3 border-b-2 font-bold transition-colors flex items-center gap-2 whitespace-nowrap"
+        [class.border-orange-500]="viewMode === 'orders'" [class.text-orange-600]="viewMode === 'orders'"
+        [class.border-transparent]="viewMode !== 'orders'" [class.text-gray-400]="viewMode !== 'orders'">
         <span>📦 Commandes</span>
         <span *ngIf="orders.length > 0" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
           {{ orders.length }}
         </span>
       </button>
 
-      <button (click)="viewMode = 'products'"
-              class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
-              [class.border-orange-500]="viewMode === 'products'"
-              [class.text-orange-600]="viewMode === 'products'"
-              [class.border-transparent]="viewMode !== 'products'"
-              [class.text-gray-400]="viewMode !== 'products'">
-        🍔 Mon Menu
+      <button (click)="viewMode = 'products'" class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
+        [class.border-orange-500]="viewMode === 'products'" [class.text-orange-600]="viewMode === 'products'"
+        [class.border-transparent]="viewMode !== 'products'" [class.text-gray-400]="viewMode !== 'products'">
+        <span>🍔 Mon Menu</span>
       </button>
 
-      <button (click)="viewMode = 'stats'"
-              class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
-              [class.border-orange-500]="viewMode === 'stats'"
-              [class.text-orange-600]="viewMode === 'stats'"
-              [class.border-transparent]="viewMode !== 'stats'"
-              [class.text-gray-400]="viewMode !== 'stats'">
-        📊 Gestion & Stats
+      <button (click)="viewMode = 'stats'" class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
+        [class.border-orange-500]="viewMode === 'stats'" [class.text-orange-600]="viewMode === 'stats'"
+        [class.border-transparent]="viewMode !== 'stats'" [class.text-gray-400]="viewMode !== 'stats'">
+        <span>📊 Gestion</span>
       </button>
 
     </div>
@@ -51,9 +51,7 @@
   <div class="container mx-auto px-4">
 
     <div *ngIf="viewMode === 'orders'" class="animate-fade-in">
-      <app-restaurant-orders
-        [orders]="orders"
-        (statusChanged)="updateOrderStatus($event.order, $event.newStatus)">
+      <app-restaurant-orders [orders]="orders" (statusChanged)="updateOrderStatus($event.order, $event.newStatus)">
       </app-restaurant-orders>
     </div>
 
@@ -66,14 +64,16 @@
         </h2>
 
         <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-1">Nom du plat</label>
-              <input type="text" formControlName="name" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
+              <input type="text" formControlName="name"
+                class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
             </div>
             <div>
               <label class="block text-sm font-bold text-gray-700 mb-1">Prix (€)</label>
-              <input type="number" formControlName="price" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
+              <input type="number" formControlName="price"
+                class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
             </div>
           </div>
           <div>
@@ -89,19 +89,21 @@
           </div>
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
-            <textarea formControlName="description" rows="2" class="w-full border rounded-lg p-2 outline-none"></textarea>
+            <textarea formControlName="description" rows="2"
+              class="w-full border rounded-lg p-2 outline-none"></textarea>
           </div>
           <div>
             <label class="block text-sm font-bold text-gray-700 mb-1">URL Image</label>
-            <input type="text" formControlName="imageUrl" placeholder="https://..." class="w-full border rounded-lg p-2 outline-none text-sm text-gray-500">
+            <input type="text" formControlName="imageUrl" placeholder="https://..."
+              class="w-full border rounded-lg p-2 outline-none text-sm text-gray-500">
           </div>
           <div class="flex gap-2 pt-2">
             <button type="submit" [disabled]="isSubmitting"
-                    class="flex-1 bg-orange-600 text-white font-bold py-2 rounded-lg hover:bg-orange-700 transition">
+              class="flex-1 bg-orange-600 text-white font-bold py-2 rounded-lg hover:bg-orange-700 transition">
               {{ isSubmitting ? '...' : (isEditing ? 'Mettre à jour' : 'Ajouter le plat') }}
             </button>
             <button *ngIf="isEditing" type="button" (click)="cancelEdit()"
-                    class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">
+              class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">
               Annuler
             </button>
           </div>
@@ -109,10 +111,11 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div *ngFor="let product of products" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start group hover:shadow-md transition">
+        <div *ngFor="let product of products"
+          class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start group hover:shadow-md transition">
           <div class="flex gap-4">
             <div class="w-16 h-16 rounded-lg bg-gray-100 bg-cover bg-center shrink-0"
-                 [style.backgroundImage]="'url(' + (product.imageUrl || 'assets/default-food.png') + ')'">
+              [style.backgroundImage]="'url(' + (product.imageUrl || 'assets/default-food.png') + ')'">
             </div>
             <div>
               <h3 class="font-bold text-gray-800">{{ product.name }}</h3>
@@ -164,7 +167,8 @@
             <h2 class="text-lg font-bold text-gray-800">Horaires d'ouverture 🕒</h2>
             <p class="text-sm text-gray-500">Définissez quand vos clients peuvent commander.</p>
           </div>
-          <button (click)="saveSchedule()" class="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-black transition text-sm">
+          <button (click)="saveSchedule()"
+            class="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold hover:bg-black transition text-sm">
             Sauvegarder
           </button>
         </div>
@@ -172,7 +176,8 @@
         <div class="p-6">
           <div class="grid gap-3">
 
-            <div *ngFor="let day of days" class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition">
+            <div *ngFor="let day of days"
+              class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition">
 
               <div class="w-28 font-bold text-gray-700 capitalize">{{ day.label }}</div>
 
@@ -183,12 +188,13 @@
                 </label>
               </div>
 
-              <div class="flex items-center gap-2 transition-opacity"
-                   [class.opacity-30]="schedule[day.key].closed"
-                   [class.pointer-events-none]="schedule[day.key].closed">
-                <input type="time" [(ngModel)]="schedule[day.key].open" class="border p-2 rounded bg-white font-mono text-sm">
+              <div class="flex items-center gap-2 transition-opacity" [class.opacity-30]="schedule[day.key].closed"
+                [class.pointer-events-none]="schedule[day.key].closed">
+                <input type="time" [(ngModel)]="schedule[day.key].open"
+                  class="border p-2 rounded bg-white font-mono text-sm">
                 <span class="text-gray-400">à</span>
-                <input type="time" [(ngModel)]="schedule[day.key].close" class="border p-2 rounded bg-white font-mono text-sm">
+                <input type="time" [(ngModel)]="schedule[day.key].close"
+                  class="border p-2 rounded bg-white font-mono text-sm">
               </div>
 
             </div>

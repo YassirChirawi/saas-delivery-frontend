@@ -1,8 +1,15 @@
 <div class="bg-white shadow-sm sticky top-0 z-50">
   <div class="container mx-auto px-4 py-3 flex justify-between items-center">
 
-    <div class="font-bold text-lg text-gray-800 truncate max-w-[50%]">
-      {{ currentRestaurant?.name || 'Restaurant' }}
+    <div class="flex items-center gap-2 max-w-[50%]">
+      <button routerLink="/" class="text-gray-500 hover:text-orange-600 transition p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+      <div class="font-bold text-lg text-gray-800 truncate">
+        {{ currentRestaurant?.name || 'Restaurant' }}
+      </div>
     </div>
 
     <div class="flex items-center gap-3" *ngIf="currentUser">
@@ -32,7 +39,7 @@
 
 <div class="min-h-screen bg-gray-50 font-sans pb-24" *ngIf="currentRestaurant">
 
-  <div class="relative h-72 w-full overflow-hidden rounded-b-3xl shadow-lg group">
+  <div class="relative h-48 md:h-72 w-full overflow-hidden rounded-b-3xl shadow-lg group">
     <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
       [style.backgroundImage]="'url(' + (currentRestaurant.imageUrl || 'assets/restaurant-bg.jpg') + ')'">
     </div>
@@ -174,12 +181,12 @@
           {{ cartTotal + (deliveryOption === 'delivery' ? 2 : 0) }} €
         </p>
       </div>
-      
+
       <!-- Zone Code Promo -->
       <div class="mb-6">
         <label class="block text-sm font-bold text-gray-700 mb-1">Code Promo</label>
         <div class="flex gap-2">
-          <input type="text" [(ngModel)]="promoCodeInput" 
+          <input type="text" [(ngModel)]="promoCodeInput"
             class="flex-1 bg-white border border-gray-200 rounded-xl p-3 focus:ring-orange-500 outline-none uppercase"
             placeholder="CODE123">
           <button (click)="applyPromo()"
@@ -187,8 +194,9 @@
             Appliquer
           </button>
         </div>
-        <p *ngIf="promoMessage" [class.text-green-600]="promoSuccess" [class.text-red-500]="!promoSuccess" class="text-xs font-bold mt-1">
-            {{ promoMessage }}
+        <p *ngIf="promoMessage" [class.text-green-600]="promoSuccess" [class.text-red-500]="!promoSuccess"
+          class="text-xs font-bold mt-1">
+          {{ promoMessage }}
         </p>
       </div>
 
