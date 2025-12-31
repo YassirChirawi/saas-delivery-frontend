@@ -48,11 +48,17 @@
     <div class="absolute bottom-0 left-0 w-full p-6 md:p-10 text-white flex flex-col items-start">
       <h1 class="text-4xl md:text-5xl font-extrabold mb-3">{{ currentRestaurant.name }}</h1>
 
-      <div
-        class="inline-block px-4 py-2 rounded-full text-sm font-bold backdrop-blur-md shadow-lg transition-all duration-500 border border-white/20"
-        [class.bg-green-500]="isRestaurantOpen" [class.text-white]="isRestaurantOpen"
-        [class.bg-red-500]="!isRestaurantOpen" [class.text-white]="!isRestaurantOpen">
-        {{ openingStatusLabel }}
+      <div class="flex gap-2">
+        <div
+          class="inline-block px-4 py-2 rounded-full text-sm font-bold backdrop-blur-md shadow-lg transition-all duration-500 border border-white/20"
+          [class.bg-green-500]="isRestaurantOpen" [class.text-white]="isRestaurantOpen"
+          [class.bg-red-500]="!isRestaurantOpen" [class.text-white]="!isRestaurantOpen">
+          {{ openingStatusLabel }}
+        </div>
+        <div *ngIf="currentRestaurant.deliveryTime"
+          class="inline-block px-4 py-2 rounded-full text-sm font-bold backdrop-blur-md shadow-lg border border-white/20 bg-black/50 text-white">
+          🕒 {{ currentRestaurant.deliveryTime }}
+        </div>
       </div>
     </div>
   </div>

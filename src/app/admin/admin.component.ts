@@ -16,8 +16,8 @@ import { getAuth } from 'firebase/auth';
 export class AdminComponent implements OnInit {
 
   // --- GESTION DES ONGLETS ---
-  // ✅ CORRECTION : Ajout de 'stats' dans le type
-  viewMode: 'orders' | 'products' | 'stats' = 'orders';
+  // ✅ CORRECTION : Ajout de 'stats' et 'promos' dans le type
+  viewMode: 'orders' | 'products' | 'stats' | 'promos' = 'orders';
 
   // --- GESTION PRODUITS ---
   productForm: FormGroup;
@@ -25,6 +25,10 @@ export class AdminComponent implements OnInit {
   isSubmitting = false;
   isEditing = false;
   editingProductId: string | null = null;
+
+  // --- GESTION CODES PROMO ---
+  promoCodes: any[] = [];
+  promoForm: FormGroup;
 
   // --- GESTION COMMANDES ---
   orders: any[] = [];
@@ -65,6 +69,15 @@ export class AdminComponent implements OnInit {
       description: ['', Validators.required],
       imageUrl: [''],
       restaurantId: ['', Validators.required]
+    });
+
+    this.promoForm = this.fb.group({
+      code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]+$/)]], // Majuscules/Chiffres
+      discountType: ['PERCENTAGE', Validators.required],
+      value: [10, [Validators.required, Validators.min(1)]],
+      expiryDate: [''],
+      maxUsage: [0], // 0 = infini
+      restaurantId: ['']
     });
   }
 
@@ -117,6 +130,7 @@ export class AdminComponent implements OnInit {
 
     // Pré-remplir le formulaire produit
     this.productForm.patchValue({ restaurantId: resto.id });
+    this.promoForm.patchValue({ restaurantId: resto.id });
 
     // Initialiser les horaires
     this.initSchedule(resto);
@@ -124,7 +138,62 @@ export class AdminComponent implements OnInit {
     // Charger les données
     this.loadProducts(resto.id!);
     this.loadOrders(resto.id!);
+    this.loadPromoCodes(resto.id!);
   }
+
+  // ==========================================
+  // 👇 PARTIE CODES PROMO
+  // ==========================================
+
+  loadPromoCodes(restaurantId: string) {
+    this.apiService.getPromoCodesByRestaurant(restaurantId).subscribe({
+      next: (codes) => this.promoCodes = codes,
+      error: (err) => console.error("Erreur chargement promos", err)
+    });
+  }
+
+  createPromo() {
+    if (this.promoForm.invalid || !this.myRestaurant?.id) return;
+    this.isSubmitting = true;
+
+    const promoData = { ...this.promoForm.value, restaurantId: this.myRestaurant.id };
+
+    // Conversion date si présente
+    if (promoData.expiryDate) {
+      promoData.expiryDate = new Date(promoData.expiryDate);
+    }
+
+    this.apiService.createPromoCode(promoData).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        alert("Code promo créé ! 🎉");
+        this.promoForm.reset({
+          discountType: 'PERCENTAGE',
+          value: 10,
+          maxUsage: 0,
+          restaurantId: this.myRestaurant?.id
+        });
+        this.loadPromoCodes(this.myRestaurant!.id!);
+      },
+      error: (err) => {
+        console.error(err);
+        this.isSubmitting = false;
+        alert("Erreur lors de la création.");
+      }
+    });
+  }
+
+  deletePromo(code: string) {
+    if (!confirm("Supprimer ce code promo ?")) return;
+
+    this.apiService.deletePromoCode(code).subscribe({
+      next: () => {
+        this.loadPromoCodes(this.myRestaurant!.id!);
+      },
+      error: (err) => alert("Erreur suppression")
+    });
+  }
+
 
   // ==========================================
   // 👇 PARTIE COMMANDES & STATS

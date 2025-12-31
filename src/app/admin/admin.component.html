@@ -45,6 +45,12 @@
         <span>📊 Gestion</span>
       </button>
 
+      <button (click)="viewMode = 'promos'" class="pb-3 border-b-2 font-bold transition-colors whitespace-nowrap"
+        [class.border-orange-500]="viewMode === 'promos'" [class.text-orange-600]="viewMode === 'promos'"
+        [class.border-transparent]="viewMode !== 'promos'" [class.text-gray-400]="viewMode !== 'promos'">
+        <span>🎫 Codes Promo</span>
+      </button>
+
     </div>
   </div>
 
@@ -232,6 +238,74 @@
                 clip-rule="evenodd" />
             </svg>
           </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="viewMode === 'promos'" class="animate-fade-in py-6">
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 max-w-3xl mx-auto">
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Créer un Code Promo</h2>
+
+        <form [formGroup]="promoForm" (ngSubmit)="createPromo()" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Code (ex: SUMMER24)</label>
+              <input type="text" formControlName="code"
+                class="w-full border rounded-lg p-2 uppercase focus:ring-2 focus:ring-orange-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Type</label>
+              <select formControlName="discountType" class="w-full border rounded-lg p-2 bg-white">
+                <option value="PERCENTAGE">Pourcentage (%)</option>
+                <option value="FIXED">Montant Fixe (DH)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Valeur</label>
+              <input type="number" formControlName="value"
+                class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-1">Max Utilisations (0 = Infini)</label>
+              <input type="number" formControlName="maxUsage"
+                class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-orange-500 outline-none">
+            </div>
+          </div>
+          <button type="submit" [disabled]="isSubmitting || promoForm.invalid"
+            class="w-full bg-orange-600 text-white font-bold py-3 rounded-lg hover:bg-orange-700 transition disabled:bg-gray-300">
+            {{ isSubmitting ? 'Création...' : 'Créer le Code' }}
+          </button>
+        </form>
+      </div>
+
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Codes Actifs</h2>
+
+        <div class="grid gap-3">
+          <div *ngFor="let promo of promoCodes"
+            class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-lg text-gray-800">{{ promo.code }}</span>
+                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded">
+                  -{{ promo.value }}{{ promo.discountType === 'PERCENTAGE' ? '%' : ' DH' }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Utilisé {{ promo.currentUsage }} fois
+                <span *ngIf="promo.maxUsage > 0">/ {{ promo.maxUsage }}</span>
+              </p>
+            </div>
+            <button (click)="deletePromo(promo.code)" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+              🗑️
+            </button>
+          </div>
+
+          <div *ngIf="promoCodes.length === 0" class="text-center py-10 text-gray-400">
+            Aucun code promo actif.
+          </div>
         </div>
       </div>
 

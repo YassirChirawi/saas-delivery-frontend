@@ -5,7 +5,7 @@ import { switchMap, map } from 'rxjs/operators'; // 👈 Ajout des opérateurs R
 import { Product } from '../models/product.model';
 import { Restaurant } from '../models/restaurant.model';
 import { environment } from 'src/environments/environment';
-import {getFirestore, doc, updateDoc, onSnapshot} from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 
 
@@ -18,7 +18,7 @@ export class ApiService {
   private app = initializeApp(environment.firebase);
   private db = getFirestore(this.app);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ============================================================
   // 👇 1. SAUVEGARDE ADMIN (Écriture directe Firestore)
@@ -140,6 +140,20 @@ export class ApiService {
   // Delete Product
   deleteProduct(id: string): Observable<any> {
     return this.http.delete(`${this.baseUrl}/products/${id}`, { responseType: 'text' });
+  }
+
+  // --- CODES PROMO ---
+
+  getPromoCodesByRestaurant(restaurantId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/promo-codes/restaurant/${restaurantId}`);
+  }
+
+  createPromoCode(promo: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/promo-codes`, promo);
+  }
+
+  deletePromoCode(code: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/promo-codes/${code}`);
   }
 
   // --- PARTENARIATS ---

@@ -124,8 +124,8 @@ export class OrderService {
     return message;
   }
 
-  verifyPromoCode(code: string, amount: number): Observable<any> {
-    return this.http.post(`${this.promoUrl}/verify`, { code, amount });
+  verifyPromoCode(code: string, amount: number, restaurantId: string): Observable<any> {
+    return this.http.post(`${this.promoUrl}/verify`, { code, amount, restaurantId });
   }
 }
 

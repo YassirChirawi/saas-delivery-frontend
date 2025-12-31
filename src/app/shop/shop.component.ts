@@ -275,7 +275,12 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.promoMessage = '';
     this.promoSuccess = false;
 
-    this.orderService.verifyPromoCode(this.promoCodeInput, this.cartTotal).subscribe({
+    if (!this.currentRestaurant || !this.currentRestaurant.id) {
+      this.promoMessage = "Erreur restaurant";
+      return;
+    }
+
+    this.orderService.verifyPromoCode(this.promoCodeInput, this.cartTotal, this.currentRestaurant.id).subscribe({
       next: (res: any) => {
         if (res.valid) {
           this.cartService.applyDiscount(this.promoCodeInput, res.discount);
