@@ -13,9 +13,8 @@
     </div>
 
     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8 text-center transition-all duration-500"
-         [class.border-orange-200]="order.status === 'PENDING'"
-         [class.border-blue-200]="order.status === 'CONFIRMED'"
-         [class.border-green-200]="order.status === 'DONE'">
+      [class.border-orange-200]="order.status === 'PENDING'" [class.border-blue-200]="order.status === 'CONFIRMED'"
+      [class.border-green-200]="order.status === 'DONE'">
 
       <div *ngIf="order.status === 'PENDING'">
         <div class="text-6xl mb-4 animate-bounce">⏳</div>
@@ -54,27 +53,24 @@
       <div class="absolute left-9 top-10 bottom-10 w-0.5 bg-gray-100"></div>
 
       <div class="absolute left-9 top-10 w-0.5 bg-green-500 transition-all duration-1000"
-           [style.height]="order.status === 'DONE' ? '100%' : (order.status === 'DELIVERING' ? '70%' : (order.status === 'CONFIRMED' ? '40%' : '0%'))">
+        [style.height]="order.status === 'DONE' ? '100%' : (order.status === 'DELIVERING' ? '70%' : (order.status === 'CONFIRMED' ? '40%' : '0%'))">
       </div>
 
       <div class="space-y-8 relative">
         <div *ngFor="let step of steps" class="flex items-start gap-4">
 
-          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 transition-colors duration-500 border-2"
-               [class.bg-green-500]="isStepActive(step.status)"
-               [class.border-green-500]="isStepActive(step.status)"
-               [class.text-white]="isStepActive(step.status)"
-               [class.bg-white]="!isStepActive(step.status)"
-               [class.border-gray-200]="!isStepActive(step.status)"
-               [class.text-gray-300]="!isStepActive(step.status)">
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 transition-colors duration-500 border-2"
+            [class.bg-green-500]="isStepActive(step.status)" [class.border-green-500]="isStepActive(step.status)"
+            [class.text-white]="isStepActive(step.status)" [class.bg-white]="!isStepActive(step.status)"
+            [class.border-gray-200]="!isStepActive(step.status)" [class.text-gray-300]="!isStepActive(step.status)">
             <span *ngIf="isStepActive(step.status)">✓</span>
             <span *ngIf="!isStepActive(step.status)">•</span>
           </div>
 
           <div>
-            <h3 class="font-bold text-sm transition-colors"
-                [class.text-gray-900]="isStepActive(step.status)"
-                [class.text-gray-400]="!isStepActive(step.status)">
+            <h3 class="font-bold text-sm transition-colors" [class.text-gray-900]="isStepActive(step.status)"
+              [class.text-gray-400]="!isStepActive(step.status)">
               {{ step.label }}
             </h3>
             <p class="text-xs text-gray-400">{{ step.description }}</p>
@@ -85,7 +81,8 @@
     </div>
 
     <div class="mt-6 text-center">
-      <p class="text-gray-500 text-sm mb-2">Total : <span class="font-bold text-gray-900">{{ order.total }} €</span></p>
+      <p class="text-gray-500 text-sm mb-2">Total : <span class="font-bold text-gray-900">{{ order.total }} DH</span>
+      </p>
       <a routerLink="/home" class="text-orange-500 font-bold hover:underline text-sm cursor-pointer">
         Retour à l'accueil
       </a>

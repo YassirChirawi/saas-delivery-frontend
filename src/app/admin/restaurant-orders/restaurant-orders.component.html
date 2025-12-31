@@ -9,18 +9,16 @@
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
     <div *ngFor="let order of orders"
-         class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between transition-all duration-300 border-l-8"
-         [class.border-l-yellow-400]="order.status === 'PENDING'"
-         [class.border-l-blue-500]="order.status === 'CONFIRMED'"
-         [class.border-l-orange-500]="order.status === 'DELIVERING'"
-         [class.border-l-green-500]="order.status === 'DONE'"
-         [class.border-l-red-500]="order.status === 'REJECTED'">
+      class="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between transition-all duration-300 border-l-8"
+      [class.border-l-yellow-400]="order.status === 'PENDING'" [class.border-l-blue-500]="order.status === 'CONFIRMED'"
+      [class.border-l-orange-500]="order.status === 'DELIVERING'" [class.border-l-green-500]="order.status === 'DONE'"
+      [class.border-l-red-500]="order.status === 'REJECTED'">
 
       <div class="p-5">
         <div class="flex justify-between items-start mb-4">
-    <span class="px-3 py-1 rounded-full text-xs font-bold border" [ngClass]="getStatusColor(order.status)">
-      {{ order.status }}
-    </span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold border" [ngClass]="getStatusColor(order.status)">
+            {{ order.status }}
+          </span>
           <div class="text-right">
 
             <p class="text-lg font-bold text-gray-800">#{{ getShortId(order.id) }}</p>
@@ -48,14 +46,16 @@
         <div class="space-y-2 border-t border-gray-100 pt-4 max-h-40 overflow-y-auto">
           <div *ngFor="let item of order.items" class="flex justify-between text-sm items-center">
             <div class="flex items-center gap-2">
-              <span class="bg-gray-200 w-6 h-6 flex items-center justify-center rounded font-bold text-xs">{{ item.quantity }}</span>
+              <span class="bg-gray-200 w-6 h-6 flex items-center justify-center rounded font-bold text-xs">{{
+                item.quantity }}</span>
               <span class="text-gray-700 font-medium line-clamp-1">{{ item.name }}</span>
             </div>
-            <span class="text-gray-400">{{ item.price }}€</span>
+            <span class="text-gray-400">{{ item.price }} DH</span>
           </div>
         </div>
 
-        <div *ngIf="order.note" class="mt-4 bg-yellow-50 p-2 rounded text-xs text-yellow-800 italic border border-yellow-100">
+        <div *ngIf="order.note"
+          class="mt-4 bg-yellow-50 p-2 rounded text-xs text-yellow-800 italic border border-yellow-100">
           📝 "{{ order.note }}"
         </div>
       </div>
@@ -64,24 +64,22 @@
 
         <div *ngIf="order.status === 'PENDING'" class="grid grid-cols-2 gap-3">
           <button (click)="updateStatus(order, 'REJECTED')"
-                  class="bg-white border border-red-200 text-red-600 font-bold py-3 rounded-xl hover:bg-red-50 text-sm">
+            class="bg-white border border-red-200 text-red-600 font-bold py-3 rounded-xl hover:bg-red-50 text-sm">
             Refuser
           </button>
           <button (click)="updateStatus(order, 'CONFIRMED')"
-                  class="bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 shadow-lg animate-pulse text-sm">
+            class="bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 shadow-lg animate-pulse text-sm">
             ✅ ACCEPTER
           </button>
         </div>
 
-        <button *ngIf="order.status === 'CONFIRMED'"
-                (click)="updateStatus(order, 'DELIVERING')"
-                class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 w-full">
+        <button *ngIf="order.status === 'CONFIRMED'" (click)="updateStatus(order, 'DELIVERING')"
+          class="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 w-full">
           🛵 Prêt / Envoyer
         </button>
 
-        <button *ngIf="order.status === 'DELIVERING'"
-                (click)="updateStatus(order, 'DONE')"
-                class="bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-900 w-full">
+        <button *ngIf="order.status === 'DELIVERING'" (click)="updateStatus(order, 'DONE')"
+          class="bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-900 w-full">
           🏁 Terminer
         </button>
 

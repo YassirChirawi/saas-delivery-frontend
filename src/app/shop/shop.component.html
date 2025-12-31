@@ -84,7 +84,7 @@
         <div>
           <div class="flex justify-between items-start mb-2">
             <h3 class="text-xl font-bold text-gray-800">{{ product.name }}</h3>
-            <span class="text-lg font-bold text-orange-600">{{ product.price }} €</span>
+            <span class="text-lg font-bold text-orange-600">{{ product.price }} DH</span>
           </div>
           <p class="text-gray-500 text-sm line-clamp-2 mb-4">{{ product.description }}</p>
         </div>
@@ -117,7 +117,7 @@
         <span class="font-bold" *ngIf="!isRestaurantOpen">Fermé 🔒</span>
         <span class="font-bold" *ngIf="isRestaurantOpen && cartCount === 0">Panier vide</span>
       </div>
-      <span class="font-bold text-lg" *ngIf="cartCount > 0">{{ cartTotal }} €</span>
+      <span class="font-bold text-lg" *ngIf="cartCount > 0">{{ cartTotal }} DH</span>
     </button>
   </div>
 
@@ -142,7 +142,7 @@
           class="flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm">
           <div class="flex-1">
             <h4 class="font-bold text-gray-800">{{ item.name }}</h4>
-            <span class="text-xs text-gray-400">{{ item.price }} € / unité</span>
+            <span class="text-xs text-gray-400">{{ item.price }} DH / unité</span>
           </div>
 
           <div class="flex items-center gap-3 bg-gray-50 rounded-lg px-2 py-1 mx-2">
@@ -154,7 +154,7 @@
           </div>
 
           <div class="flex flex-col items-end gap-1">
-            <span class="font-bold text-orange-600">{{ item.price * item.quantity }} €</span>
+            <span class="font-bold text-orange-600">{{ item.price * item.quantity }} DH</span>
             <button (click)="removeFromCart(item.id || '')"
               class="text-xs text-red-400 hover:text-red-600 transition">🗑️</button>
           </div>
@@ -171,14 +171,14 @@
           [class.bg-white]="deliveryOption === 'delivery'" [class.shadow-sm]="deliveryOption === 'delivery'"
           [class.text-gray-500]="deliveryOption !== 'delivery'"
           (click)="deliveryOption = 'delivery'; deliveryOptionChanged()">
-          🛵 Livraison (+2€)
+          🛵 Livraison (+{{ currentRestaurant?.deliveryFees || 0 }} DH)
         </button>
       </div>
 
       <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100 mb-6 text-center">
         <p class="text-gray-600 text-sm mb-1">Total à payer</p>
         <p class="text-4xl font-extrabold text-gray-900">
-          {{ cartTotal + (deliveryOption === 'delivery' ? 2 : 0) }} €
+          {{ cartTotal + (deliveryOption === 'delivery' ? (currentRestaurant?.deliveryFees || 0) : 0) }} DH
         </p>
       </div>
 

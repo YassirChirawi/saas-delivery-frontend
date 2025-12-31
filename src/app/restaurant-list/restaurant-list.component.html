@@ -79,9 +79,9 @@
 
         <div class="flex items-center text-xs text-gray-500 mt-1 space-x-2">
           <span>$$ • {{ resto.tags[0] || 'Général' }}</span>
-          <span>• 1.99 € livraison</span>
+          <span>• {{ resto.deliveryFees ? resto.deliveryFees + ' DH' : 'Gratuit' }} livraison</span>
           <span class="text-gray-300">•</span>
-          <span class="text-green-600 font-medium">15-25 min</span>
+          <span class="text-green-600 font-medium">{{ resto.deliveryTime || '20-30 min' }}</span>
         </div>
       </div>
 

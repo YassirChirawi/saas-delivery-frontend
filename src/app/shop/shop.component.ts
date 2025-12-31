@@ -280,7 +280,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
         if (res.valid) {
           this.cartService.applyDiscount(this.promoCodeInput, res.discount);
           this.promoSuccess = true;
-          this.promoMessage = `Code appliqué ! -${res.discount}€`;
+          this.promoMessage = `Code appliqué ! -${res.discount} DH`;
           this.cartTotal = this.cartService.getTotalPrice(); // Update UI
         } else {
           this.promoSuccess = false;

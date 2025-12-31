@@ -246,8 +246,11 @@ export class AdminComponent implements OnInit {
   }
 
   // ==========================================
-  // 👇 PARTIE HORAIRES
+  // 👇 PARTIE HORAIRES & REGLAGES
   // ==========================================
+
+  deliveryTime: string = '20-30 min';
+  deliveryFees: number = 15;
 
   // ✅ AJOUT : Cette méthode manquait
   initSchedule(restaurant: Restaurant) {
@@ -260,20 +263,26 @@ export class AdminComponent implements OnInit {
         this.schedule[day.key] = { ...defaultDay };
       }
     });
+
+    // Init Delivery Info
+    if (restaurant.deliveryTime) this.deliveryTime = restaurant.deliveryTime;
+    if (restaurant.deliveryFees) this.deliveryFees = restaurant.deliveryFees;
   }
 
-  saveSchedule() {
+  saveSettings() {
     if (!this.myRestaurant?.id) {
       alert("Erreur: ID Restaurant introuvable");
       return;
     }
 
-    console.log("Envoi des horaires...", this.schedule); // 👀 Regarde ta console
+    console.log("Sauvegarde paramètres...", this.schedule, this.deliveryTime, this.deliveryFees);
 
     this.apiService.updateRestaurantSettings(this.myRestaurant.id, {
-      openingHours: this.schedule
+      openingHours: this.schedule,
+      deliveryTime: this.deliveryTime,
+      deliveryFees: this.deliveryFees
     }).then(() => {
-      alert("Horaires sauvegardés ! ✅");
+      alert("Paramètres sauvegardés ! ✅");
     }).catch(err => {
       console.error("Erreur Firebase:", err);
       alert("Erreur lors de la sauvegarde.");

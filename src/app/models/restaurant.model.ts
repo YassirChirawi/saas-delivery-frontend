@@ -11,7 +11,7 @@ export interface Restaurant {
   rating: number;
   ratingCount: number;
   deliveryTime?: string; // "20-30 min"
-  deliveryPrice?: number;
+  deliveryFees?: number;
   tags?: string[];
   openingHours?: any;
 }

@@ -113,12 +113,12 @@ export class OrderService {
     message += `\n📋 *Détail :*\n`;
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach((item: any) => {
-        message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity}€)\n`;
+        message += `▫️ ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
       });
     }
 
     if (order.note) message += `\n📝 Note : ${order.note}`;
-    message += `\n💰 *TOTAL : ${order.total} €*`;
+    message += `\n💰 *TOTAL : ${order.total} DH*`;
     message += `\n📍 Restaurant : ${order.restaurantName}`;
 
     return message;
