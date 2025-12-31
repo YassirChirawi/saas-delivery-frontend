@@ -15,6 +15,12 @@ export class CartService {
 
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   cart$ = this.cartItems.asObservable();
+  
+  private promoCodeSource = new BehaviorSubject<string | null>(null);
+  promoCode$ = this.promoCodeSource.asObservable();
+
+  private discountAmountSource = new BehaviorSubject<number>(0);
+  discountAmount$ = this.discountAmountSource.asObservable();
 
   private deliveryFee = 0;
 
@@ -108,7 +114,20 @@ export class CartService {
       return total + (item.price * item.quantity);
     }, 0);
 
-    return productsTotal + this.deliveryFee;
+    return productsTotal + this.deliveryFee - this.discountAmountSource.value;
+  }
+  
+  applyDiscount(code: string, amount: number) {
+    this.promoCodeSource.next(code);
+    this.discountAmountSource.next(amount);
+  }
+
+  getDiscountAmount(): number {
+    return this.discountAmountSource.value;
+  }
+
+  getPromoCode(): string | null {
+    return this.promoCodeSource.value;
   }
 
   // --- UTILITAIRES ---

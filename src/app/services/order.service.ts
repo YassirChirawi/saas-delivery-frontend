@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
   getFirestore, collection, addDoc, doc, onSnapshot,
-  query, where, orderBy, updateDoc
+  query, where, orderBy, updateDoc, Firestore
 } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { environment } from '../../environments/environment';
@@ -11,25 +12,23 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class OrderService {
+  private apiUrl = 'http://localhost:8080/api/v1/orders'; // Adjust based on actual base URL if needed
+  private promoUrl = 'http://localhost:8080/api/v1/promo-codes';
+  private db: Firestore;
 
-  private app = initializeApp(environment.firebase);
-  private db = getFirestore(this.app);
+  constructor(private http: HttpClient) {
+    const app = initializeApp(environment.firebase);
+    this.db = getFirestore(app);
+  }
 
-  constructor() { }
-
-  // --- 1. CRÉATION (Côté Client) ---
-  async createOrder(orderData: any): Promise<string> {
-    const ordersRef = collection(this.db, 'orders');
-
-    const finalOrder = {
-      ...orderData,
-      status: 'PENDING', // Statut initial
-      createdAt: new Date().toISOString(),
-      createdAtTimestamp: Date.now() // Pour le tri
-    };
-
-    const docRef = await addDoc(ordersRef, finalOrder);
-    return docRef.id;
+  // --- 1. CRÉATION (Via Backend Spring Boot) ---
+  createOrder(orderData: any): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.http.post(this.apiUrl, orderData, { responseType: 'text' }).subscribe({
+        next: (id) => resolve(id),
+        error: (err) => reject(err)
+      });
+    });
   }
 
   // --- 2. LECTURE CLIENT (Tracking Unitaire) ---
@@ -123,6 +122,10 @@ export class OrderService {
     message += `\n📍 Restaurant : ${order.restaurantName}`;
 
     return message;
+  }
+
+  verifyPromoCode(code: string, amount: number): Observable<any> {
+    return this.http.post(`${this.promoUrl}/verify`, { code, amount });
   }
 }
 

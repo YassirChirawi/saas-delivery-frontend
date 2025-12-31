@@ -38,6 +38,11 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   orderNote: string = '';
   guestAddress: string = '';
 
+  // Promo
+  promoCodeInput: string = '';
+  promoMessage: string = '';
+  promoSuccess: boolean = false;
+
   // Utilisateur
   currentUser: any = null;
 
@@ -262,6 +267,36 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       alert("Erreur lors de la commande.");
     }
   }
+
+  applyPromo() {
+    if (!this.promoCodeInput) return;
+
+    // Reset
+    this.promoMessage = '';
+    this.promoSuccess = false;
+
+    this.orderService.verifyPromoCode(this.promoCodeInput, this.cartTotal).subscribe({
+      next: (res: any) => {
+        if (res.valid) {
+          this.cartService.applyDiscount(this.promoCodeInput, res.discount);
+          this.promoSuccess = true;
+          this.promoMessage = `Code appliqué ! -${res.discount}€`;
+          this.cartTotal = this.cartService.getTotalPrice(); // Update UI
+        } else {
+          this.promoSuccess = false;
+          this.promoMessage = res.message || 'Code invalide';
+          this.cartService.applyDiscount('', 0);
+          this.cartTotal = this.cartService.getTotalPrice();
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        this.promoSuccess = false;
+        this.promoMessage = 'Erreur lors de la vérification';
+      }
+    });
+  }
+
 
   formatPhoneForWhatsApp(phone: string): string {
     if (!phone) return "";
