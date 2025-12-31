@@ -1,7 +1,13 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-  <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  <div class="max-w-md w-full bg-white p-8 rounded-3xl shadow-lg relative">
 
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Connexion 🔐</h1>
+    <a routerLink="/" class="absolute top-4 left-4 text-gray-400 hover:text-orange-600 transition" title="Retour">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+    </a>
+
+    <h2 class="text-3xl font-extrabold text-center text-gray-800 mb-6">Connexion 👋</h2>
 
     <div *ngIf="errorMessage" class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm border border-red-200">
       {{ errorMessage }}
@@ -10,15 +16,20 @@
     <form (submit)="onLogin(); $event.preventDefault()">
       <div class="mb-4">
         <label class="block text-gray-600 text-sm font-bold mb-2">Email</label>
-        <input [(ngModel)]="email" name="email" type="email" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="admin@delivery.com" required>
+        <input [(ngModel)]="email" name="email" type="email"
+          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          placeholder="admin@delivery.com" required>
       </div>
 
       <div class="mb-6">
         <label class="block text-gray-600 text-sm font-bold mb-2">Mot de passe</label>
-        <input [(ngModel)]="password" name="password" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••" required>
+        <input [(ngModel)]="password" name="password" type="password"
+          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••"
+          required>
       </div>
 
-      <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+      <button type="submit"
+        class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
         Se connecter
       </button>
     </form>
