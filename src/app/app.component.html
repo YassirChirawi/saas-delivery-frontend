@@ -1,7 +1,53 @@
-<app-header></app-header>
+<app-header class="hidden md:block"></app-header>
+<app-header class="block md:hidden sticky top-0 z-40"></app-header>
 
-<div class="main-content" style="padding-top: 80px;">
-
+<div class="main-content pt-20 pb-24 md:pb-0">
   <router-outlet></router-outlet>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<div
+  class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-16 z-50 md:hidden pb-safe">
+
+  <a routerLink="/" routerLinkActive="text-gray-900" [routerLinkActiveOptions]="{exact: true}"
+    class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    </svg>
+    <span class="text-[10px] font-bold">Accueil</span>
+  </a>
+
+  <a routerLink="/search" routerLinkActive="text-gray-900"
+    class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    <span class="text-[10px] font-bold">Explorer</span>
+  </a>
+
+  <a routerLink="/shop/cart" routerLinkActive="text-gray-900"
+    class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 relative">
+    <div class="relative">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      </svg>
+      <!-- Badge placeholder (dynamic logic needed later) -->
+      <!-- <span class="absolute -top-1 -right-1 bg-green-600 text-white text-[9px] font-bold px-1 rounded-full">2</span> -->
+    </div>
+    <span class="text-[10px] font-bold">Panier</span>
+  </a>
+
+  <a routerLink="/my-account" routerLinkActive="text-gray-900"
+    class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+    <span class="text-[10px] font-bold">Compte</span>
+  </a>
 
 </div>
